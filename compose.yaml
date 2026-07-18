@@ -1,0 +1,101 @@
+name: ${COMPOSE_PROJECT_NAME:-compadres_cigars}
+
+services:
+  db:
+    image: mariadb:11.4.12
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-file-per-table=1
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [compadres]
+
+  wordpress:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      WORDPRESS_DB_HOST: ${DB_HOST:-db:3306}
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+      WORDPRESS_DEBUG: ${WORDPRESS_DEBUG:-false}
+      COMPADRES_AGE_PROVIDER: ${COMPADRES_AGE_PROVIDER:-disabled}
+      COMPADRES_AGE_REQUIRED: ${COMPADRES_AGE_REQUIRED:-true}
+      COMPADRES_TAX_PROVIDER: ${COMPADRES_TAX_PROVIDER:-disabled}
+      COMPADRES_PAYMENT_PROVIDER: ${COMPADRES_PAYMENT_PROVIDER:-disabled}
+      COMPADRES_PAYMENT_PRODUCTION_APPROVED: ${COMPADRES_PAYMENT_PRODUCTION_APPROVED:-false}
+      COMPADRES_SHIPPING_PROVIDER: ${COMPADRES_SHIPPING_PROVIDER:-disabled}
+      COMPADRES_SHIPPING_PRODUCTION_APPROVED: ${COMPADRES_SHIPPING_PRODUCTION_APPROVED:-false}
+      COMPADRES_SMTP_HOST: ${COMPADRES_SMTP_HOST:-mailpit}
+      COMPADRES_SMTP_PORT: ${COMPADRES_SMTP_PORT:-1025}
+    ports:
+      - "${WP_PORT:-8080}:80"
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./wp-content/themes/compadres:/var/www/html/wp-content/themes/compadres
+      - ./wp-content/plugins/compadres-commerce:/var/www/html/wp-content/plugins/compadres-commerce
+      - ./config/wordpress-hardening.php:/var/www/html/wp-content/mu-plugins/compadres-hardening.php:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost/wp-login.php >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    networks: [compadres]
+
+  wpcli:
+    image: wordpress:cli-2.12.0-php8.3
+    depends_on:
+      db:
+        condition: service_healthy
+      wordpress:
+        condition: service_started
+    user: "33:33"
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      WORDPRESS_DB_HOST: ${DB_HOST:-db:3306}
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./wp-content/themes/compadres:/var/www/html/wp-content/themes/compadres
+      - ./wp-content/plugins/compadres-commerce:/var/www/html/wp-content/plugins/compadres-commerce
+      - ./config/wordpress-hardening.php:/var/www/html/wp-content/mu-plugins/compadres-hardening.php:ro
+    working_dir: /var/www/html
+    entrypoint: ["wp"]
+    networks: [compadres]
+
+  mailpit:
+    image: axllent/mailpit:v1.27.8
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+    networks: [compadres]
+
+volumes:
+  db_data:
+  wordpress_data:
+
+networks:
+  compadres:
+    driver: bridge

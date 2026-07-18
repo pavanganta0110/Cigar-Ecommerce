@@ -1,0 +1,23 @@
+{
+  "name": "compadres-cigar-ecommerce",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "lint:js": "eslint wp-content/themes/compadres/assets/js",
+    "lint:css": "stylelint 'wp-content/themes/compadres/**/*.css'",
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test --grep @a11y",
+    "test": "npm run lint:js && npm run lint:css && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
+    "@eslint/js": "^9.38.0",
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^26.1.1",
+    "eslint": "^9.38.0",
+    "globals": "^16.4.0",
+    "stylelint": "^16.25.0",
+    "stylelint-config-standard": "^39.0.1",
+    "typescript": "^5.9.3"
+  }
+}

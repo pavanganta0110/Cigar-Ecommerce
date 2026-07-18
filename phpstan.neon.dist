@@ -1,0 +1,13 @@
+includes:
+  - vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+  level: 6
+  paths:
+    - wp-content/plugins/compadres-commerce/src
+  scanFiles:
+    - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
+  excludePaths:
+    analyse:
+      - wp-content/plugins/compadres-commerce/tests
+  tmpDir: .phpstan-cache

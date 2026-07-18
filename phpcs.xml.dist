@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<ruleset name="Compadres Cigars">
+  <description>WordPress coding standards for the Compadres application.</description>
+  <file>wp-content/plugins/compadres-commerce</file>
+  <file>wp-content/themes/compadres</file>
+  <exclude-pattern>*/vendor/*</exclude-pattern>
+  <arg name="extensions" value="php" />
+  <arg name="colors" />
+  <rule ref="WordPress-Core" />
+  <rule ref="WordPress-Extra" />
+  <!-- The domain layer follows PSR-4 and uses camelCase methods. WordPress
+       hooks and template functions continue to follow WordPress naming. -->
+  <rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
+    <exclude-pattern>*/src/*</exclude-pattern>
+    <exclude-pattern>*/tests/*</exclude-pattern>
+  </rule>
+  <rule ref="WordPress.Files.FileName.InvalidClassFileName">
+    <exclude-pattern>*/src/*</exclude-pattern>
+    <exclude-pattern>*/tests/*</exclude-pattern>
+  </rule>
+  <rule ref="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid">
+    <exclude-pattern>*/src/*</exclude-pattern>
+    <exclude-pattern>*/tests/*</exclude-pattern>
+  </rule>
+  <rule ref="WordPress.NamingConventions.ValidVariableName">
+    <exclude-pattern>*/src/*</exclude-pattern>
+    <exclude-pattern>*/tests/*</exclude-pattern>
+  </rule>
+  <rule ref="WordPress.WP.Capabilities">
+    <properties>
+      <property name="custom_capabilities" type="array">
+        <element value="manage_woocommerce" />
+      </property>
+    </properties>
+  </rule>
+  <config name="minimum_supported_wp_version" value="7.0" />
+  <config name="testVersion" value="8.3-" />
+</ruleset>

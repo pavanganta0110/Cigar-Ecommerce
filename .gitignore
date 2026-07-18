@@ -1,0 +1,45 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+!config/environments/*.example.php
+
+# WordPress core and generated/runtime content
+wordpress/
+wp-admin/
+wp-includes/
+wp-*.php
+index.php
+xmlrpc.php
+wp-content/uploads/
+wp-content/cache/
+wp-content/upgrade/
+wp-content/languages/
+wp-content/debug.log
+wp-content/plugins/woocommerce/
+wp-content/plugins/akismet/
+
+# Dependencies and build output
+vendor/
+node_modules/
+coverage/
+test-results/
+playwright-report/
+.phpunit.result.cache
+.phpcs-cache
+.phpstan-cache/
+
+# Backups, exports, logs, certificates
+backups/
+exports/
+*.sql
+*.sql.gz
+*.log
+*.pem
+*.key
+*.p12
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
