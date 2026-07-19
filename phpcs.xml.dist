@@ -32,6 +32,9 @@
     <properties>
       <property name="custom_capabilities" type="array">
         <element value="manage_woocommerce" />
+        <element value="manage_product_terms" />
+        <element value="edit_products" />
+        <element value="edit_product" />
       </property>
     </properties>
   </rule>

@@ -63,6 +63,7 @@ create_page() {
 
 create_page about 'About Compadres Cigars' '<p><strong>Development placeholder:</strong> Add the approved Compadres company story, team, and business information before production.</p>'
 create_page contact 'Contact' '<p><strong>Development placeholder:</strong> Add approved support contact details before production. Customer service details must not be invented.</p>'
+create_page brands 'Cigar Brands' '[compadres_brands]'
 create_page shipping-policy 'Shipping Policy' '<p><strong>Legal review required:</strong> Shipping services, destinations, timing, adult-signature terms, and carrier obligations must be approved before production.</p>'
 create_page age-policy 'Age Policy' '<p><strong>Legal review required:</strong> This store is intended only for adults age 21 and older. Final identity-verification language and procedures require legal and provider review.</p>'
 create_page privacy-policy 'Privacy Policy' '<p><strong>Legal review required:</strong> Replace this placeholder with an approved privacy notice covering actual data practices and providers before production.</p>'

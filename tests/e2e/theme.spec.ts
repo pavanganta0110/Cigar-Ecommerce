@@ -54,7 +54,7 @@ test('homepage exposes data-driven storefront sections with safe empty states', 
   ]) {
     await expect(page.getByRole('heading', { name: heading })).toBeVisible();
   }
-  await expect(page.getByText(/catalog content is being prepared/i).first()).toBeVisible();
+  await expect(page.locator('.empty-catalog, ul.products li.product').first()).toBeVisible();
   await expect(page.getByText(/site entry confirmation does not replace/i).first()).toBeVisible();
 });
 

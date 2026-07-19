@@ -35,6 +35,7 @@ exports/
 *.sql
 *.sql.gz
 *.log
+*.errors.csv
 *.pem
 *.key
 *.p12

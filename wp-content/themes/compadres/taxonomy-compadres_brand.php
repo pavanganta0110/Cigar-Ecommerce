@@ -45,7 +45,11 @@ $archive_style = $accent ? 'border-top-color:' . $accent : '';
 
 	<section class="content-shell brand-products" aria-labelledby="brand-products-heading">
 		<h2 id="brand-products-heading"><?php esc_html_e( 'Cigars from this brand', 'compadres' ); ?></h2>
-		<?php woocommerce_content(); ?>
+		<?php
+		add_filter( 'woocommerce_show_page_title', '__return_false' );
+		woocommerce_content();
+		remove_filter( 'woocommerce_show_page_title', '__return_false' );
+		?>
 	</section>
 </main>
 <?php get_footer(); ?>
