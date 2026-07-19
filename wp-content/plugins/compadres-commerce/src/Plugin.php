@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Compadres\Commerce;
 
+use Compadres\Commerce\AgeVerification\AgeVerificationAdmin;
+use Compadres\Commerce\AgeVerification\CheckoutIntegration;
 use Compadres\Commerce\Audit\AuditAdmin;
 use Compadres\Commerce\Audit\AuditMigration;
 use Compadres\Commerce\Catalog\BrandTaxonomy;
@@ -47,6 +49,8 @@ final class Plugin {
 		( new ProductMetadata() )->registerHooks();
 		( new CatalogFilters() )->registerHooks();
 		( new AgeGate() )->registerHooks();
+		( new CheckoutIntegration() )->registerHooks();
+		( new AgeVerificationAdmin() )->registerHooks();
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			\WP_CLI::add_command( 'compadres fixtures', new FixtureCommand() );
 			\WP_CLI::add_command( 'compadres catalog', new CatalogCommand() );

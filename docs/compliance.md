@@ -60,6 +60,89 @@ The shared Playwright fixture in `tests/e2e/compadres-test.ts` confirms through 
 
 When testing manually, remove the `compadres_age_confirmed` cookie or use a private browsing context to see the first-visit flow again. Administrators can test the disabled state by disabling the setting and confirming that neither modal markup nor age-gate assets render.
 
+## Checkout age verification
+
+Checkout age verification is independent from the 21+ site-entry gate. The signed entry cookie records only that a visitor acknowledged the entry notice; checkout never reads it as identity or age evidence. Forged form fields claiming `passed` are likewise ignored. Only the authoritative normalized result held in the WooCommerce session may authorize checkout.
+
+### Provider boundary and current AgeChecker limitations
+
+Checkout orchestration depends on the replaceable `AgeVerificationProvider` interface. Results are normalized to `passed`, `failed`, `pending`, `manual_review`, `expired`, or `unavailable`. Only an unexpired `passed` result permits checkout. Every other state fails closed before order creation and payment authorization. A valid unexpired pass is reused to avoid unnecessary duplicate provider transactions.
+
+`AgeCheckerProvider` currently supplies the normalized adapter, hosted-continuation URL construction, and authoritative status-refresh boundary. Network transport is injected through `compadres_agechecker_transport`; this repository intentionally contains no invented AgeChecker endpoint, request schema, webhook signature, or production credential handling. An account, credential, or successful connection is not evidence of production approval.
+
+When additional evidence is required, the customer follows the configured HTTPS hosted-provider link. The link contains only the encoded provider reference and encoded return URL. It opens with `noopener noreferrer`. Returning to Compadres does not assert success: the server refreshes the provider reference and stores the newly normalized authoritative status. Refresh is customer initiated and does not poll automatically or create another verification attempt.
+
+Compadres does not receive, proxy, inspect, cache, log, or retain identity documents. There is no custom ID upload, selfie capture, government-ID field, OCR, facial recognition, document-review dashboard, or verification-session database table.
+
+### Conditional, transient date of birth
+
+DOB is rendered only when the selected provider configuration declares it required. The field is labeled, exposes its required state to assistive technology, and uses `autocomplete="bday"`. Server validation accepts only a real `YYYY-MM-DD` date strictly before the current date. Compadres performs no custom local age-matching decision; the validated value is passed transiently to the provider abstraction.
+
+DOB is removed from normalized results and is never written to the WooCommerce session, customer or user metadata, protected order metadata, audit details, application logs, browser local storage, analytics, or WordPress administration. Providers that do not require DOB render no DOB field and create no empty DOB metadata.
+
+### Storage
+
+The WooCommerce session stores only:
+
+- Provider name.
+- Provider reference.
+- Canonical status.
+- Non-sensitive reason code.
+- Verification timestamp.
+- Expiration timestamp.
+
+The protected order snapshot stores the same fields and, when applicable, only the manual decision, reviewer user ID, and manual-decision timestamp. It does not copy the checkout identity payload, billing address, DOB, entry cookie, authorization data, provider request, provider response, government-ID value, or document data.
+
+The launch checkout uses WooCommerce's server-rendered `[woocommerce_checkout]` surface so validation runs through the documented classic checkout hooks before order creation and gateway processing. `scripts/bootstrap.sh` configures that checkout surface. Checkout Blocks are not represented as supported by this increment.
+
+### Manual decisions
+
+Existing orders carrying a trusted server-side `manual_review` snapshot expose reference-only approval and rejection controls to users with `compadres_review_age_verification`. Normal checkout does not create such an order because every non-pass state is blocked before order creation; this control is reserved for an approved operational/provider integration that creates the snapshot without browser assertions. The controls do not display or review identity documents. Requests require a decision-specific nonce, order ID, reviewer identity, and current `manual_review` state. The optional non-sensitive reason is sanitized. Approval writes a 24-hour `passed` decision when no later provider expiry exists; rejection writes `failed`. Both write the reviewer ID and decision timestamp. An atomic per-order decision lock prevents concurrent decisions, a second decision is rejected with HTTP 409, unauthorized requests return HTTP 403, and redirect notices use a separate nonce.
+
+### Audit events and privacy
+
+The age-verification workflow emits these essential events through the existing recursively redacting audit service:
+
+- `age_verification.started`
+- `age_verification.status_updated`
+- `age_verification.passed`
+- `age_verification.failed`
+- `age_verification.manual_review_required`
+- `age_verification.manual_approved`
+- `age_verification.manual_rejected`
+- `age_verification.expired`
+- `age_verification.provider_unavailable`
+- `age_verification.settings_updated`
+
+Status events include only normalized provider, reference, status, non-sensitive reason, and timestamps. Audit values exclude DOB, customer addresses, full customer identity, cookies, authorization values, credentials, and raw provider request or response payloads.
+
+### Configuration and production boundary
+
+Authorized compliance administrators configure whether verification is enabled, provider selection, conditional DOB capability, hosted URL template, and the separate production-approval flag. The administration status is `Not configured` until a provider is selected; a selected AgeChecker adapter remains `configured_not_approved` and does not claim connectivity or production approval. Development mock status is distinct from both states.
+
+The deterministic mock provider is permitted only in `local` and `development` environments. It is rejected in staging and production regardless of options. Production AgeChecker use requires an approved transport implementation, provider credentials supplied through the deployment secret manager, an HTTPS hosted template containing `{reference}` and `{return_url}`, the correct DOB capability, and explicit production approval. The hosted template host must also appear in the deployment-controlled `COMPADRES_AGECHECKER_ALLOWED_HOSTS` comma-separated allowlist; only `.example.test` hosts are accepted in local/development. Required verification remains fail closed when configuration, transport, or provider service is unavailable.
+
+Current external blockers include AgeChecker commercial approval, approved API and hosted-return documentation, sandbox and production credentials, legal approval of customer wording and operating procedures, and final privacy and retention review. This implementation is not a statement of legal approval or production readiness.
+
+### Local and browser testing
+
+Bootstrap creates the supported classic checkout surface:
+
+```bash
+./scripts/bootstrap.sh
+docker compose run --rm wpcli option get compadres_age_verification --format=json
+```
+
+Focused quality and browser checks:
+
+```bash
+docker run --rm -v "$PWD:/app" -w /app php:8.3-cli vendor/bin/phpunit --testsuite unit
+node_modules/.bin/playwright test tests/e2e/age-verification.spec.ts --project=desktop-chromium
+node_modules/.bin/playwright test tests/e2e/age-verification.spec.ts --project=mobile-chromium
+```
+
+`tests/e2e/age-verification.spec.ts` temporarily selects the classic checkout, enables Cash on Delivery for a fictional virtual development product, and uses development-only mock statuses. It restores the checkout content, product state, provider settings, entry-gate settings, and payment settings afterward. Covered states include pass, failure, pending hosted continuation and refresh, manual review, expiration, provider unavailability, unconfigured provider, forged browser status, entry-cookie separation, conditional DOB, protected metadata, administration security, gateway handoff, desktop, mobile, and focused Axe checks. It never contacts a real AgeChecker account.
+
 ## Administrative audit logging
 
 The audit log records security-relevant administrative and compliance decisions. It supports investigation and operational accountability, but does not by itself prove regulatory compliance.

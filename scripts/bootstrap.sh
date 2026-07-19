@@ -42,6 +42,11 @@ wp_cli plugin install woocommerce --version="${WOOCOMMERCE_VERSION}" --activate
 wp_cli theme activate compadres
 wp_cli plugin activate compadres-commerce
 wp_cli wc tool run install_pages --user="${WP_ADMIN_USER}" || true
+checkout_id="$(wp_cli option get woocommerce_checkout_page_id)"
+if [[ -n "$checkout_id" ]]; then
+  # Compliance hooks target WooCommerce's server-rendered checkout surface.
+  wp_cli post update "$checkout_id" --post_content='[woocommerce_checkout]' >/dev/null
+fi
 wp_cli option update woocommerce_enable_guest_checkout yes
 wp_cli option update woocommerce_enable_signup_and_login_from_checkout yes
 wp_cli option update woocommerce_enable_myaccount_registration yes

@@ -1,5 +1,32 @@
+import { execFileSync } from 'node:child_process';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+
+let originalAgeGate = '';
+
+function wpCli(args: string[]): string {
+  return execFileSync('docker', ['compose', 'run', '--rm', 'wpcli', ...args], {
+    cwd: process.cwd(),
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  }).trim();
+}
+
+test.beforeAll(() => {
+  originalAgeGate = wpCli(['option', 'get', 'compadres_age_gate', '--format=json']);
+  const settings = JSON.parse(originalAgeGate) as Record<string, unknown>;
+  wpCli([
+    'option',
+    'update',
+    'compadres_age_gate',
+    JSON.stringify({ ...settings, enabled: true }),
+    '--format=json',
+  ]);
+});
+
+test.afterAll(() => {
+  wpCli(['option', 'update', 'compadres_age_gate', originalAgeGate, '--format=json']);
+});
 
 test.beforeEach(async ({ context }) => {
   await context.clearCookies();
@@ -10,9 +37,9 @@ test('first visit presents an accessible modal with contained keyboard behavior 
 }) => {
   await page.goto('/');
 
-  const dialog = page.getByRole('dialog', { name: /21 or older/i });
-  const confirm = page.getByRole('button', { name: /I am 21 or older/i });
-  const exit = page.getByRole('link', { name: /Exit website/i });
+  const dialog = page.locator('[data-age-gate] [role="dialog"]');
+  const confirm = page.locator('[data-age-confirm]');
+  const exit = page.locator('[data-age-exit]');
 
   await expect(dialog).toBeVisible();
   await expect(dialog).toHaveAttribute('aria-modal', 'true');
@@ -37,8 +64,8 @@ test('confirmation is persisted in a secure server-issued cookie and restores pa
   page,
 }) => {
   await page.goto('/');
-  const dialog = page.getByRole('dialog', { name: /21 or older/i });
-  await page.getByRole('button', { name: /I am 21 or older/i }).click();
+  const dialog = page.locator('[data-age-gate] [role="dialog"]');
+  await page.locator('[data-age-confirm]').click();
 
   await expect(dialog).toBeHidden();
   await expect(page.getByRole('main')).toBeFocused();
@@ -52,7 +79,7 @@ test('confirmation is persisted in a secure server-issued cookie and restores pa
 
 test('exit action is visible and uses the configured URL', async ({ page }) => {
   await page.goto('/');
-  const exit = page.getByRole('link', { name: /Exit website/i });
+  const exit = page.locator('[data-age-exit]');
   await expect(exit).toBeVisible();
   await expect(exit).toHaveAttribute('href', 'https://www.google.com/');
 });

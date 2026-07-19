@@ -17,7 +17,12 @@ get_header();
 				<p class="eyebrow"><?php esc_html_e( 'Compadres Cigars', 'compadres' ); ?></p>
 				<h1><?php the_title(); ?></h1>
 			</header>
-			<div class="entry-content"><?php the_content(); ?></div>
+			<div class="entry-content">
+				<?php if ( function_exists( 'is_checkout' ) && is_checkout() ) : ?>
+					<h2 class="screen-reader-text"><?php esc_html_e( 'Checkout details', 'compadres' ); ?></h2>
+				<?php endif; ?>
+				<?php the_content(); ?>
+			</div>
 		</article>
 	<?php endwhile; ?>
 </main>
