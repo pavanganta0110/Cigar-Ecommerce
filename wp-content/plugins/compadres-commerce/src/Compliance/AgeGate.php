@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Compadres\Commerce\Compliance;
 
+use Compadres\Commerce\Audit\AuditServiceFactory;
+use Compadres\Commerce\Audit\ChangedValues;
 use Compadres\Commerce\Plugin;
 
 final class AgeGate {
@@ -18,6 +20,13 @@ final class AgeGate {
 		add_action( 'wp_footer', array( $this, 'render' ) );
 		add_action( 'wp_ajax_compadres_age_confirm', array( $this, 'confirm' ) );
 		add_action( 'wp_ajax_nopriv_compadres_age_confirm', array( $this, 'confirm' ) );
+		add_action( 'add_option_' . self::OPTION, array( $this, 'auditSettingsCreated' ), 10, 2 );
+		add_action( 'update_option_' . self::OPTION, array( $this, 'auditSettingsChange' ), 10, 2 );
+		add_filter( 'option_page_capability_compadres_compliance', array( $this, 'settingsCapability' ) );
+	}
+
+	public function settingsCapability(): string {
+		return 'compadres_manage_compliance';
 	}
 
 	public function registerSettings(): void {
@@ -34,10 +43,10 @@ final class AgeGate {
 
 	public function registerSettingsPage(): void {
 		add_submenu_page(
-			'woocommerce',
+			'compadres-audit-log',
 			__( 'Compadres Compliance', 'compadres-commerce' ),
 			__( 'Compliance', 'compadres-commerce' ),
-			'compadres_manage_restrictions',
+			'compadres_manage_compliance',
 			'compadres-compliance',
 			array( $this, 'renderSettingsPage' )
 		);
@@ -110,8 +119,34 @@ final class AgeGate {
 		return '' !== $value && $this->token()->isValid( $value, time() );
 	}
 
+	public function auditSettingsChange( mixed $previous, mixed $current ): void {
+		$changes = ChangedValues::between(
+			is_array( $previous ) ? $previous : array( 'value' => $previous ),
+			is_array( $current ) ? $current : array( 'value' => $current )
+		);
+		if ( ! $changes['changed'] ) {
+			return;
+		}
+		AuditServiceFactory::create()->entityChange(
+			'compliance.age_gate.settings_updated',
+			'settings',
+			self::OPTION,
+			$changes['previous'],
+			$changes['current'],
+			get_current_user_id(),
+			AuditServiceFactory::requestContext()
+		);
+	}
+
+	public function auditSettingsCreated( string $option, mixed $current ): void {
+		if ( self::OPTION !== $option ) {
+			return;
+		}
+		$this->auditSettingsChange( AgeGateSettings::defaults(), $current );
+	}
+
 	public function renderSettingsPage(): void {
-		if ( ! current_user_can( 'compadres_manage_restrictions' ) ) {
+		if ( ! current_user_can( 'compadres_manage_compliance' ) ) {
 			wp_die( esc_html__( 'You are not allowed to manage compliance settings.', 'compadres-commerce' ) );
 		}
 		$settings = $this->settings();
@@ -125,6 +160,7 @@ final class AgeGate {
 		);
 		?>
 		<div class="wrap"><h1><?php esc_html_e( 'Compadres Compliance', 'compadres-commerce' ); ?></h1>
+			<?php settings_errors(); ?>
 			<form action="options.php" method="post">
 				<?php settings_fields( 'compadres_compliance' ); ?>
 				<table class="form-table" role="presentation">

@@ -43,7 +43,7 @@ final class RoleCapabilities {
 
 	/** @return array<string, bool> */
 	public static function allCapabilities(): array {
-		return self::only( array( 'compadres_manage_integrations', 'compadres_view_tax_reports', 'compadres_view_excise_reports', 'compadres_view_customer_data', 'compadres_review_age_verification', 'compadres_view_audit_logs', 'compadres_manage_restrictions', 'compadres_manage_refunds', 'compadres_manage_orders', 'compadres_manage_inventory', 'compadres_view_catalog_reports', 'compadres_manage_roles' ) );
+		return self::only( array( 'compadres_manage_integrations', 'compadres_view_tax_reports', 'compadres_view_excise_reports', 'compadres_view_customer_data', 'compadres_review_age_verification', 'compadres_view_audit_logs', 'compadres_export_audit_logs', 'compadres_manage_compliance', 'compadres_manage_restrictions', 'compadres_manage_refunds', 'compadres_manage_orders', 'compadres_manage_inventory', 'compadres_view_catalog_reports', 'compadres_manage_roles' ) );
 	}
 
 	/**

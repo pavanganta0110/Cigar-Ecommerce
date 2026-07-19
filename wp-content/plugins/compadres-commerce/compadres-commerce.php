@@ -39,8 +39,10 @@ register_activation_hook(
 			wp_die( esc_html__( 'Compadres Commerce requires PHP 8.3 or newer.', 'compadres-commerce' ) );
 		}
 		update_option( 'compadres_commerce_schema_version', '0.1.0', false );
+		\Compadres\Commerce\Audit\AuditMigration::install();
 		\Compadres\Commerce\Security\RoleManager::install();
-		update_option( 'compadres_roles_version', '1', false );
+		update_option( 'compadres_roles_version', '2', false );
+		( new \Compadres\Commerce\Catalog\BrandTaxonomy() )->register();
 		flush_rewrite_rules();
 	}
 );

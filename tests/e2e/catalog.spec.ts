@@ -5,7 +5,8 @@ test('fictional development brands and products render from structured data', as
   await expect(page.getByRole('heading', { level: 1, name: 'Cigar Brands' })).toBeVisible();
   const brandLink = page.getByRole('link', { name: /Ember Quay/i }).first();
   await expect(brandLink).toBeVisible();
-  await brandLink.click();
+  await expect(brandLink).toHaveAttribute('href', /\/brands\/ember-quay\/$/);
+  await page.goto('/brands/ember-quay/');
   await expect(page.getByRole('heading', { level: 1, name: /Ember Quay/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Cigars from this brand' })).toBeVisible();
 });

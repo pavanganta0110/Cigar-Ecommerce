@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Compadres\Commerce;
 
+use Compadres\Commerce\Audit\AuditAdmin;
+use Compadres\Commerce\Audit\AuditMigration;
 use Compadres\Commerce\Catalog\BrandTaxonomy;
 use Compadres\Commerce\Catalog\CatalogCommand;
 use Compadres\Commerce\Catalog\CatalogFilters;
@@ -38,7 +40,9 @@ final class Plugin {
 	private function registerHooks(): void {
 		add_action( 'admin_notices', array( $this, 'renderReadinessNotice' ) );
 		add_action( 'before_woocommerce_init', array( $this, 'declareHposCompatibility' ) );
+		add_action( 'init', array( AuditMigration::class, 'maybeInstall' ), 1 );
 		add_action( 'init', array( $this, 'ensureRoles' ), 5 );
+		( new AuditAdmin() )->registerHooks();
 		( new BrandTaxonomy() )->registerHooks();
 		( new ProductMetadata() )->registerHooks();
 		( new CatalogFilters() )->registerHooks();
@@ -50,11 +54,11 @@ final class Plugin {
 	}
 
 	public function ensureRoles(): void {
-		if ( '1' === get_option( 'compadres_roles_version' ) ) {
+		if ( '2' === get_option( 'compadres_roles_version' ) ) {
 			return;
 		}
 		RoleManager::install();
-		update_option( 'compadres_roles_version', '1', false );
+		update_option( 'compadres_roles_version', '2', false );
 	}
 
 	public function declareHposCompatibility(): void {

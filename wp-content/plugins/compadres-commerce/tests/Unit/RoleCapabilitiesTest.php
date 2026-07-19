@@ -17,4 +17,15 @@ final class RoleCapabilitiesTest extends TestCase {
 		self::assertArrayNotHasKey( 'compadres_manage_refunds', $roles['compadres_marketing_viewer']['capabilities'] );
 		self::assertTrue( $roles['compadres_order_manager']['capabilities']['compadres_manage_refunds'] );
 	}
+
+	public function testAuditAndComplianceCapabilitiesAreRestrictedToAuthorizedRoles(): void {
+		$roles = RoleCapabilities::definitions();
+
+		self::assertTrue( $roles['compadres_operations_manager']['capabilities']['compadres_view_audit_logs'] );
+		self::assertArrayNotHasKey( 'compadres_view_audit_logs', $roles['compadres_tax_finance_viewer']['capabilities'] );
+		self::assertTrue( $roles['compadres_store_administrator']['capabilities']['compadres_export_audit_logs'] );
+		self::assertTrue( $roles['compadres_store_administrator']['capabilities']['compadres_manage_compliance'] );
+		self::assertArrayNotHasKey( 'compadres_export_audit_logs', $roles['compadres_operations_manager']['capabilities'] );
+		self::assertArrayNotHasKey( 'compadres_manage_compliance', $roles['compadres_operations_manager']['capabilities'] );
+	}
 }
