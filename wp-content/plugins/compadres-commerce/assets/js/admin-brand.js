@@ -1,3 +1,5 @@
+/* global jQuery, wp */
+
 jQuery(($) => {
   $(document).on('click', '.compadres-select-media', (event) => {
     event.preventDefault();

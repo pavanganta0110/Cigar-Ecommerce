@@ -46,6 +46,8 @@ wp_cli option update woocommerce_enable_guest_checkout yes
 wp_cli option update woocommerce_enable_signup_and_login_from_checkout yes
 wp_cli option update woocommerce_enable_myaccount_registration yes
 wp_cli option update woocommerce_currency USD
+wp_cli option update woocommerce_coming_soon no
+wp_cli option update woocommerce_store_pages_only no
 
 create_page() {
   local slug="$1"

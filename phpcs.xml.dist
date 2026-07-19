@@ -35,6 +35,18 @@
         <element value="manage_product_terms" />
         <element value="edit_products" />
         <element value="edit_product" />
+        <element value="compadres_manage_integrations" />
+        <element value="compadres_view_tax_reports" />
+        <element value="compadres_view_excise_reports" />
+        <element value="compadres_view_customer_data" />
+        <element value="compadres_review_age_verification" />
+        <element value="compadres_view_audit_logs" />
+        <element value="compadres_manage_restrictions" />
+        <element value="compadres_manage_refunds" />
+        <element value="compadres_manage_orders" />
+        <element value="compadres_manage_inventory" />
+        <element value="compadres_view_catalog_reports" />
+        <element value="compadres_manage_roles" />
       </property>
     </properties>
   </rule>

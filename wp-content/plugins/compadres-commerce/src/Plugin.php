@@ -9,11 +9,13 @@ use Compadres\Commerce\Catalog\CatalogCommand;
 use Compadres\Commerce\Catalog\CatalogFilters;
 use Compadres\Commerce\Catalog\FixtureCommand;
 use Compadres\Commerce\Catalog\ProductMetadata;
+use Compadres\Commerce\Compliance\AgeGate;
 use Compadres\Commerce\Infrastructure\Environment;
 use Compadres\Commerce\Security\RoleManager;
 
 final class Plugin {
-
+	public const VERSION        = '0.1.0';
+	private static bool $booted = false;
 	private Environment $environment;
 
 	public function __construct( Environment $environment ) {
@@ -21,12 +23,16 @@ final class Plugin {
 	}
 
 	public static function boot(): void {
+		if ( self::$booted ) {
+			return;
+		}
 		$environment_name = getenv( 'APP_ENV' );
 		$environment      = Environment::fromString(
 			false === $environment_name ? 'production' : (string) $environment_name
 		);
 		$plugin           = new self( $environment );
 		$plugin->registerHooks();
+		self::$booted = true;
 	}
 
 	private function registerHooks(): void {
@@ -36,6 +42,7 @@ final class Plugin {
 		( new BrandTaxonomy() )->registerHooks();
 		( new ProductMetadata() )->registerHooks();
 		( new CatalogFilters() )->registerHooks();
+		( new AgeGate() )->registerHooks();
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			\WP_CLI::add_command( 'compadres fixtures', new FixtureCommand() );
 			\WP_CLI::add_command( 'compadres catalog', new CatalogCommand() );

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './compadres-test.js';
 
 test('fictional development brands and products render from structured data', async ({ page }) => {
   await page.goto('/brands/');

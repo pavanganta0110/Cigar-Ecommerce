@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './compadres-test.js';
 
 test('core content pages use the Compadres theme', async ({ page }) => {
   for (const route of ['/about/', '/contact/', '/shipping-policy/', '/age-policy/']) {
