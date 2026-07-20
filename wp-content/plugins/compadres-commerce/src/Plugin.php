@@ -15,6 +15,10 @@ use Compadres\Commerce\Catalog\FixtureCommand;
 use Compadres\Commerce\Catalog\ProductMetadata;
 use Compadres\Commerce\Compliance\AgeGate;
 use Compadres\Commerce\Infrastructure\Environment;
+use Compadres\Commerce\Restrictions\CheckoutRestrictionIntegration;
+use Compadres\Commerce\Restrictions\RestrictionAdmin;
+use Compadres\Commerce\Restrictions\RestrictionFixtureCommand;
+use Compadres\Commerce\Restrictions\RestrictionMigration;
 use Compadres\Commerce\Security\RoleManager;
 
 final class Plugin {
@@ -43,6 +47,7 @@ final class Plugin {
 		add_action( 'admin_notices', array( $this, 'renderReadinessNotice' ) );
 		add_action( 'before_woocommerce_init', array( $this, 'declareHposCompatibility' ) );
 		add_action( 'init', array( AuditMigration::class, 'maybeInstall' ), 1 );
+		add_action( 'init', array( RestrictionMigration::class, 'maybeInstall' ), 2 );
 		add_action( 'init', array( $this, 'ensureRoles' ), 5 );
 		( new AuditAdmin() )->registerHooks();
 		( new BrandTaxonomy() )->registerHooks();
@@ -50,10 +55,13 @@ final class Plugin {
 		( new CatalogFilters() )->registerHooks();
 		( new AgeGate() )->registerHooks();
 		( new CheckoutIntegration() )->registerHooks();
+		( new CheckoutRestrictionIntegration() )->registerHooks();
+		( new RestrictionAdmin() )->registerHooks();
 		( new AgeVerificationAdmin() )->registerHooks();
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			\WP_CLI::add_command( 'compadres fixtures', new FixtureCommand() );
 			\WP_CLI::add_command( 'compadres catalog', new CatalogCommand() );
+			\WP_CLI::add_command( 'compadres restriction-fixtures', new RestrictionFixtureCommand() );
 		}
 	}
 

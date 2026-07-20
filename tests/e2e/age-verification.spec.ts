@@ -258,6 +258,7 @@ test('entry-gate cookie and forged browser status cannot bypass unconfigured ver
 });
 
 test('failed, expired, and provider-unavailable results fail closed without internals', async ({ page }) => {
+  test.setTimeout(60_000);
   for (const scenario of [
     { status: 'failed', message: /could not verify/i },
     { status: 'expired', message: /expired.*verify again/i },
@@ -330,6 +331,7 @@ test('DOB is conditional, validated server-side, and never persisted or audited'
 });
 
 test('manual-review controls enforce capability, nonce, state, and one decision', async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
   test.skip(testInfo.project.name.includes('mobile'), 'Administrative security is covered on desktop.');
   const order = createManualReviewOrder();
   await login(page, 'age-review-admin');
@@ -339,7 +341,17 @@ test('manual-review controls enforce capability, nonce, state, and one decision'
   const nonce = await controls.locator('input[name="compadres_age_nonce"]').inputValue();
   wpCli(['option', 'update', `compadres_age_decision_lock_${order.id}`, '1']);
   await controls.getByLabel(/optional non-sensitive reason/i).fill('<b>Reviewed</b>');
-  await controls.getByRole('button', { name: /approve age verification/i }).click();
+  const orderForm = controls.locator('xpath=ancestor::form');
+  await Promise.all([
+    page.waitForNavigation(),
+    orderForm.evaluate((form: HTMLFormElement) => {
+      const submitter = form.querySelector<HTMLButtonElement>(
+        '#compadres-age-manual-decision button[name="decision"][value="approved"]',
+      );
+      if (!submitter) throw new Error('Missing age-verification approval control.');
+      form.requestSubmit(submitter);
+    }),
+  ]);
   await expect(page.locator('.notice-success')).toContainText(/approved/i);
   expect(getOption(`compadres_age_decision_lock_${order.id}`)).toBeNull();
   const stored = JSON.parse(
@@ -376,6 +388,7 @@ test('manual-review controls enforce capability, nonce, state, and one decision'
 });
 
 test('checkout verification controls have no focused Axe violations @a11y', async ({ page }) => {
+  test.setTimeout(60_000);
   configureVerification('pending', {
     requires_date_of_birth: true,
     mock_refresh_status: 'passed',

@@ -143,6 +143,56 @@ node_modules/.bin/playwright test tests/e2e/age-verification.spec.ts --project=m
 
 `tests/e2e/age-verification.spec.ts` temporarily selects the classic checkout, enables Cash on Delivery for a fictional virtual development product, and uses development-only mock statuses. It restores the checkout content, product state, provider settings, entry-gate settings, and payment settings afterward. Covered states include pass, failure, pending hosted continuation and refresh, manual review, expiration, provider unavailability, unconfigured provider, forged browser status, entry-cookie separation, conditional DOB, protected metadata, administration security, gateway handoff, desktop, mobile, and focused Axe checks. It never contacts a real AgeChecker account.
 
+## Geographic checkout restrictions
+
+Geographic restrictions are server-side deny rules for the classic WooCommerce checkout. The launch implementation supports U.S. country, state, city, exact postal code, an explicitly configured postal prefix, product, product category, and Compadres brand targets. It does not provide maps, county lookup, geographic APIs, legal-research automation, law ingestion, bulk imports, simulation dashboards, or additional override systems.
+
+### Matching behavior
+
+- Values within one target type are alternatives. For example, a state target containing `AA` and `BB` matches either value.
+- Product, category, and brand target groups are also alternatives. A matching product **or** category **or** brand satisfies the cart side of a rule.
+- Configured destination dimensions and the cart side are combined with AND. A rule containing state and product targets blocks only when both the state and one configured cart target match.
+- Exact postal codes compare the complete normalized postal value. They never imply prefix behavior.
+- Postal prefixes match only when entered in the separate explicit postal-prefix field. Prefixes are bounded to one through nine uppercase letters or digits.
+- Higher numeric priority rules are evaluated first. The highest-priority matching rule supplies the customer-facing message; all matching rule IDs remain available for bounded audit context.
+- Effective and expiration values are interpreted in the WordPress site timezone when saved and stored as UTC. A rule is active at its effective instant and inactive at its expiration instant.
+- Launch enforcement is U.S.-only. A non-U.S. checkout fails closed rather than being treated as supported.
+
+Production rules require current legal review by qualified counsel and operational approval. Rule names, notes, source references, and fixture content in this repository are not legal guidance and do not establish where cigar sales are lawful.
+
+### Administration and audit
+
+Users with `compadres_manage_compliance` manage rules from the top-level **Restrictions** administration page. Store administrators have this capability; a separately assigned compliance role may receive it without receiving unrelated administrative capabilities. The page lists rules and supports add, edit, activate, deactivate, and archive. Archive is used instead of destructive deletion so audit or future order references remain interpretable.
+
+Every state-changing request requires the capability and a rule-specific WordPress nonce. Input is normalized and bounded, referenced products and taxonomy terms must exist, source links must be public HTTPS URLs without credentials, query parameters, or fragments, and all rendered values are escaped. Revision-qualified writes reject stale concurrent updates.
+
+Only these administration events are audited:
+
+- `restriction.rule_created`
+- `restriction.rule_updated`
+- `restriction.rule_activated`
+- `restriction.rule_deactivated`
+- `restriction.rule_archived`
+
+Audit details contain only bounded rule-administration fields. Customer addresses, cart contents, internal notes, customer messages, and source URLs are not included. Checkout block events contain only the validation phase and bounded matching rule IDs.
+
+### Checkout ordering and failure behavior
+
+Restrictions are reevaluated after cart or address updates, during checkout validation, on `woocommerce_checkout_create_order` before the order is persisted, and during pay-for-order before the selected gateway's payment action. Browser fields claiming an allowed result are ignored. A blocked checkout cannot create an order or invoke payment processing.
+
+Repository, schema, hydration, or evaluation failures fail closed with a generic retry message. Missing or malformed rule data is never treated as permission to ship. Operations should alert on associated application and audit errors.
+
+### Fictional development fixtures and testing
+
+The fixture rule is fictional, development-only, and not legal guidance. It is keyed by immutable fixture ownership so repeated load is idempotent and removal deletes only its own rule and targets:
+
+```bash
+docker compose run --rm wpcli compadres restriction-fixtures load
+docker compose run --rm wpcli compadres restriction-fixtures remove
+```
+
+Fixture loading is disabled in production. Staging requires the explicit `COMPADRES_ENABLE_FIXTURES=1` opt-in and still uses fictional data only. Focused browser coverage is in `tests/e2e/restrictions.spec.ts` for desktop and mobile; it covers allowed checkout, fictional state and exact-postal restrictions, destination-plus-product matching, server reevaluation after address/cart changes, forged browser values, payment ordering, administration authorization/nonces, fixture ownership, and focused accessibility.
+
 ## Administrative audit logging
 
 The audit log records security-relevant administrative and compliance decisions. It supports investigation and operational accountability, but does not by itself prove regulatory compliance.
