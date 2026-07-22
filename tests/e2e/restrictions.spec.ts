@@ -8,10 +8,12 @@ const genericMessage =
 let originalVerification: string | null = null;
 let originalCod: string | null = null;
 let originalAgeGate: string | null = null;
+let originalShippingScenario: string | null = null;
 let originalCheckoutContent = '';
 let restrictedProductId = '';
 let allowedProductId = '';
 let originalProductStates: Record<string, string> = {};
+let shippingZoneId = '';
 const ruleIds: string[] = [];
 
 function wpCli(args: string[], environment: Record<string, string> = {}): string {
@@ -168,6 +170,7 @@ test.beforeAll(() => {
   originalVerification = getOption('compadres_age_verification');
   originalCod = getOption('woocommerce_cod_settings');
   originalAgeGate = getOption('compadres_age_gate');
+  originalShippingScenario = getOption('compadres_shipping_mock_scenario');
   originalCheckoutContent = wpCli([
     'eval',
     '$p=get_post((int)get_option("woocommerce_checkout_page_id"));echo $p ? $p->post_content : "";',
@@ -193,6 +196,19 @@ test.beforeAll(() => {
     '--format=json',
   ]);
   wpCli(['option', 'update', 'compadres_age_gate', JSON.stringify({ enabled: false }), '--format=json']);
+  wpCli([
+    'option',
+    'update',
+    'compadres_shipping_mock_scenario',
+    JSON.stringify({ scenario: 'eligible' }),
+    '--format=json',
+  ]);
+  wpCli(['eval', 'WC_Cache_Helper::get_transient_version("shipping",true);']);
+  shippingZoneId = wpCli([
+    'eval',
+    '$zones=WC_Shipping_Zones::get_zones();foreach($zones as $z){if("Compadres Restrictions E2E Shipping"===$z["zone_name"]){(new WC_Shipping_Zone((int)$z["zone_id"]))->delete();}}' +
+      '$zone=new WC_Shipping_Zone();$zone->set_zone_name("Compadres Restrictions E2E Shipping");$zone->set_zone_order(0);$zone->add_location("US","country");$zone->save();$zone->add_shipping_method("compadres_mock_shipping");echo $zone->get_id();',
+  ]);
   wpCli([
     'option',
     'update',
@@ -222,7 +238,7 @@ test.beforeAll(() => {
     ]);
     wpCli([
       'eval',
-      `$p=wc_get_product(${id});$p->set_virtual(true);$p->set_manage_stock(false);$p->set_stock_status('instock');$p->save();`,
+      `$p=wc_get_product(${id});$p->set_virtual(false);$p->set_manage_stock(false);$p->set_stock_status('instock');$p->save();`,
     ]);
   }
   createRule({ name: 'Fictional restricted state', state: 'ZZ' });
@@ -249,6 +265,8 @@ test.afterAll(() => {
   restoreOption('compadres_age_verification', originalVerification);
   restoreOption('woocommerce_cod_settings', originalCod);
   restoreOption('compadres_age_gate', originalAgeGate);
+  restoreOption('compadres_shipping_mock_scenario', originalShippingScenario);
+  if (shippingZoneId !== '') wpCli(['eval', `(new WC_Shipping_Zone(${Number(shippingZoneId)}))->delete();`]);
   wpCli([
     'eval',
     `$id=(int)get_option('woocommerce_checkout_page_id');wp_update_post(array('ID'=>$id,'post_content'=>base64_decode('${Buffer.from(originalCheckoutContent).toString('base64')}')));`,

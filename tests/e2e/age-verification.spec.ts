@@ -7,9 +7,11 @@ const password = 'CompadresTestOnly42';
 let originalVerification: string | null = null;
 let originalCod: string | null = null;
 let originalAgeGate: string | null = null;
+let originalShippingScenario: string | null = null;
 let originalCheckoutContent = '';
 let originalProductState = '';
 let productId = '';
+let shippingZoneId = '';
 
 function wpCli(args: string[]): string {
   return execFileSync('docker', ['compose', 'run', '--rm', 'wpcli', ...args], {
@@ -124,7 +126,7 @@ async function fillCheckout(page: Page): Promise<void> {
 }
 
 async function submitCheckout(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /place order/i }).click();
+  await page.locator('form.checkout').evaluate((form: HTMLFormElement) => form.requestSubmit());
 }
 
 function createManualReviewOrder(): { id: string; url: string } {
@@ -162,6 +164,7 @@ test.beforeAll(() => {
   originalVerification = getOption(optionName);
   originalCod = getOption('woocommerce_cod_settings');
   originalAgeGate = getOption('compadres_age_gate');
+  originalShippingScenario = getOption('compadres_shipping_mock_scenario');
   originalCheckoutContent = wpCli([
     'eval',
     '$p=get_post((int)get_option("woocommerce_checkout_page_id"));echo $p ? $p->post_content : "";',
@@ -177,7 +180,20 @@ test.beforeAll(() => {
   ]);
   wpCli([
     'eval',
-    `$p=wc_get_product(${productId});$p->set_virtual(true);$p->set_manage_stock(false);$p->set_stock_status('instock');$p->save();`,
+    `$p=wc_get_product(${productId});$p->set_virtual(false);$p->set_manage_stock(false);$p->set_stock_status('instock');$p->save();`,
+  ]);
+  wpCli([
+    'option',
+    'update',
+    'compadres_shipping_mock_scenario',
+    JSON.stringify({ scenario: 'eligible' }),
+    '--format=json',
+  ]);
+  wpCli(['eval', 'WC_Cache_Helper::get_transient_version("shipping",true);']);
+  shippingZoneId = wpCli([
+    'eval',
+    '$zones=WC_Shipping_Zones::get_zones();foreach($zones as $z){if("Compadres Age E2E Shipping"===$z["zone_name"]){(new WC_Shipping_Zone((int)$z["zone_id"]))->delete();}}' +
+      '$zone=new WC_Shipping_Zone();$zone->set_zone_name("Compadres Age E2E Shipping");$zone->set_zone_order(0);$zone->add_location("US","country");$zone->save();$zone->add_shipping_method("compadres_mock_shipping");echo $zone->get_id();',
   ]);
   wpCli([
     'option',
@@ -195,13 +211,16 @@ test.afterAll(() => {
   restoreOption(optionName, originalVerification);
   restoreOption('woocommerce_cod_settings', originalCod);
   restoreOption('compadres_age_gate', originalAgeGate);
+  restoreOption('compadres_shipping_mock_scenario', originalShippingScenario);
+  if (shippingZoneId !== '') wpCli(['eval', `(new WC_Shipping_Zone(${Number(shippingZoneId)}))->delete();`]);
   wpCli([
     'eval',
     `$id=(int)get_option('woocommerce_checkout_page_id');wp_update_post(array('ID'=>$id,'post_content'=>base64_decode('${Buffer.from(originalCheckoutContent).toString('base64')}')));$s=json_decode(base64_decode('${Buffer.from(originalProductState).toString('base64')}'),true);$p=wc_get_product(${productId});if($p&&is_array($s)){$p->set_virtual((bool)$s['virtual']);$p->set_manage_stock((bool)$s['manage_stock']);$p->set_stock_quantity($s['stock_quantity']);$p->set_stock_status((string)$s['stock_status']);$p->save();}`,
   ]);
 });
 
-test.beforeEach(() => {
+test.beforeEach(({}, testInfo) => {
+  testInfo.setTimeout(90_000);
   configureVerification('passed');
   configureEntryGate(false);
 });

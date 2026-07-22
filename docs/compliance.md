@@ -193,6 +193,63 @@ docker compose run --rm wpcli compadres restriction-fixtures remove
 
 Fixture loading is disabled in production. Staging requires the explicit `COMPADRES_ENABLE_FIXTURES=1` opt-in and still uses fictional data only. Focused browser coverage is in `tests/e2e/restrictions.spec.ts` for desktop and mobile; it covers allowed checkout, fictional state and exact-postal restrictions, destination-plus-product matching, server reevaluation after address/cart changes, forged browser values, payment ordering, administration authorization/nonces, fixture ownership, and focused accessibility.
 
+## Adult Signature Required and shipping eligibility
+
+Every non-empty cigar cart requires Adult Signature Required delivery. `AdultSignaturePolicy` is the single server-side authority for whether the cart requires adult signature, whether the selected service supports it, and whether checkout may continue. Browser-submitted eligibility claims are ignored. The selected WooCommerce rate must exist in the server-calculated package rates and map to a bounded provider service identifier. The launch implementation supports one shipping package; an absent, forged, malformed, unknown, or additional package selection fails closed rather than bypassing validation.
+
+The enforced classic-checkout sequence is:
+
+1. Cart and inventory validation.
+2. Geographic restriction evaluation.
+3. Authoritative checkout age verification.
+4. Adult Signature Required determination.
+5. Shipping-service eligibility.
+6. Payment processing.
+
+Eligibility is rechecked on checkout validation and immediately before order creation. A blocked decision throws before the order can be persisted or a gateway can run. Pay-for-order requires a complete server-created allowed snapshot and revalidates its stored service against the active provider; missing, malformed, blocked, or newly ineligible metadata stops payment. Provider failures and exceptions are normalized to a generic unavailable result, and raw provider details are not exposed to customers. Checkout Blocks are not supported by this launch increment; the supported surface remains `[woocommerce_checkout]`.
+
+### Provider boundary and production prohibition
+
+`ShippingMethodProvider` is deliberately limited to checking configuration, eligible services, Adult Signature Required support, a stable provider name, and an optional service reference. It performs no label purchase, tracking, pickup, warehouse, refund, delivery-notification, or carrier transaction. No UPS, FedEx, USPS, or other carrier behavior, endpoint, payload, approval, or service guarantee is represented in this repository.
+
+The deterministic Compadres mock method is labeled **Compadres Test Shipping (development only)** and provides eligible, ineligible, unavailable, and no-service scenarios. It performs no real carrier operation and is not carrier-approved. It is available automatically only in local/development. Staging additionally requires `COMPADRES_ENABLE_MOCK_SHIPPING=1`; production rejects the method regardless of environment options or browser values. Missing or malformed mock configuration defaults to unavailable, not eligible.
+
+A production adapter remains blocked on approved carrier documentation and tobacco-service terms, confirmed Adult Signature Required support, account and service approval, approved customer wording and procedures, and production credentials supplied through the deployment secret manager. The mock is not evidence of production readiness or legal approval.
+
+### Order metadata, administration, and audit
+
+Successful orders retain only these protected shipping fields:
+
+- Adult Signature Required: yes/no.
+- Bounded provider identifier.
+- Bounded service identifier.
+- Bounded opaque service reference, when available.
+- Eligibility result: allowed/blocked.
+- Eligibility-check timestamp.
+
+Raw carrier responses, customer addresses, provider exceptions, labels, tracking payloads, credentials, and customer secrets are not stored in shipping metadata. The existing WooCommerce order screen displays Adult Signature Required status, provider, service, and eligibility result; there is no separate shipping dashboard.
+
+Only these shipping events are emitted through the redacting audit service:
+
+- `shipping.eligibility_checked`
+- `shipping.checkout_blocked`
+- `shipping.settings_updated`
+
+Audit context is bounded to normalized provider/service support, result, and enforcement phase. It excludes full addresses, cart contents, carrier payloads, raw exceptions, authorization values, credentials, and customer secrets.
+
+### Local and browser testing
+
+Configure a deterministic local scenario and run focused checks with:
+
+```bash
+docker compose run --rm wpcli option update compadres_shipping_mock_scenario '{"scenario":"eligible"}' --format=json
+docker run --rm -v "$PWD:/app" -w /app php:8.3-cli vendor/bin/phpunit wp-content/plugins/compadres-commerce/tests/Unit/Shipping
+node_modules/.bin/playwright test tests/e2e/shipping.spec.ts --project=desktop-chromium
+node_modules/.bin/playwright test tests/e2e/shipping.spec.ts --project=mobile-chromium
+```
+
+`tests/e2e/shipping.spec.ts` creates and removes an isolated U.S. test zone, temporarily makes the fictional product shippable, uses Cash on Delivery only as a gateway-boundary probe, and restores checkout, product, age, payment, scenario, and restriction state. It covers eligible, unsupported, unavailable, no-service, forged-value, geographic-ordering, age-ordering, metadata/administration, production prohibition, payment blocking, desktop/mobile, audit privacy, and focused Axe behavior. It never contacts a real carrier.
+
 ## Administrative audit logging
 
 The audit log records security-relevant administrative and compliance decisions. It supports investigation and operational accountability, but does not by itself prove regulatory compliance.

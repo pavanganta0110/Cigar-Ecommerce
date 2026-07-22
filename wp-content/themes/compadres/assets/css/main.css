@@ -85,6 +85,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .site-footer__notice { border-top: 1px solid rgb(255 255 255 / 12%); font-size: 0.8rem; margin: 3rem auto 0; max-width: var(--content-width); padding-top: 1.5rem; }
 .woocommerce ul.products li.product { background: var(--color-white); padding-bottom: 1.5rem; }
 .woocommerce ul.products li.product .woocommerce-loop-product__title, .woocommerce div.product .product_title { font-family: var(--font-display); font-size: 1.6rem; }
+.woocommerce [id="compadres_date_of_birth-description"] { color: #50575e; }
 
 @media (width <= 800px) {
   .site-header__inner { grid-template-columns: 1fr auto auto; gap: 1rem; }

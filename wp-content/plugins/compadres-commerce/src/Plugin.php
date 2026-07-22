@@ -20,6 +20,9 @@ use Compadres\Commerce\Restrictions\RestrictionAdmin;
 use Compadres\Commerce\Restrictions\RestrictionFixtureCommand;
 use Compadres\Commerce\Restrictions\RestrictionMigration;
 use Compadres\Commerce\Security\RoleManager;
+use Compadres\Commerce\Shipping\CheckoutShippingIntegration;
+use Compadres\Commerce\Shipping\MockShippingMethod;
+use Compadres\Commerce\Shipping\ShippingAdmin;
 
 final class Plugin {
 	public const VERSION        = '0.1.0';
@@ -58,6 +61,9 @@ final class Plugin {
 		( new CheckoutRestrictionIntegration() )->registerHooks();
 		( new RestrictionAdmin() )->registerHooks();
 		( new AgeVerificationAdmin() )->registerHooks();
+		( new ShippingAdmin() )->register();
+		( new CheckoutShippingIntegration() )->register();
+		add_filter( 'woocommerce_shipping_methods', array( $this, 'registerShippingMethods' ) );
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			\WP_CLI::add_command( 'compadres fixtures', new FixtureCommand() );
 			\WP_CLI::add_command( 'compadres catalog', new CatalogCommand() );
@@ -92,5 +98,18 @@ final class Plugin {
 			echo esc_html__( 'Compadres Commerce: production checkout remains unavailable until approved age, tax, payment, and shipping providers are configured.', 'compadres-commerce' );
 			echo '</p></div>';
 		}
+	}
+
+	/**
+	 * Register the development-only mock shipping method. It is automatically
+	 * unavailable in production and only available in explicitly enabled
+	 * staging; see WordPressShippingRuntime::mockMethodAllowed().
+	 *
+	 * @param array<string, class-string> $methods
+	 * @return array<string, class-string>
+	 */
+	public function registerShippingMethods( array $methods ): array {
+		$methods[ MockShippingMethod::METHOD_ID ] = MockShippingMethod::class;
+		return $methods;
 	}
 }
