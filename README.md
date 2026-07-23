@@ -28,7 +28,7 @@ Open:
 - WordPress admin: <http://localhost:8080/wp-admin/>
 - Mailpit: <http://localhost:8025>
 
-The bootstrap script installs WordPress, installs WooCommerce 10.9.4, activates the Compadres theme and Compadres Commerce plugin, creates WooCommerce pages, and configures local account/checkout defaults. It refuses to run when `APP_ENV=production`.
+The bootstrap script installs WordPress, installs WooCommerce 10.9.4, activates the Compadres theme and Compadres Commerce plugin, creates WooCommerce pages, and configures local account/checkout defaults. It also loads the idempotent fictional catalog fixtures in local/development environments. It refuses to run when `APP_ENV=production`.
 
 ## Common commands
 

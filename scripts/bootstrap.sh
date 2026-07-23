@@ -41,6 +41,9 @@ wp_cli rewrite structure '/%postname%/' --hard
 wp_cli plugin install woocommerce --version="${WOOCOMMERCE_VERSION}" --activate
 wp_cli theme activate compadres
 wp_cli plugin activate compadres-commerce
+if [[ "${APP_ENV:-local}" == "local" || "${APP_ENV:-local}" == "development" ]]; then
+  wp_cli compadres fixtures load
+fi
 wp_cli wc tool run install_pages --user="${WP_ADMIN_USER}" || true
 checkout_id="$(wp_cli option get woocommerce_checkout_page_id)"
 if [[ -n "$checkout_id" ]]; then

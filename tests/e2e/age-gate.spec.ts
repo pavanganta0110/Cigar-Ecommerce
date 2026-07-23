@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
-let originalAgeGate = '';
+let originalAgeGate: string | null | undefined;
 
 function wpCli(args: string[]): string {
   return execFileSync('docker', ['compose', 'run', '--rm', 'wpcli', ...args], {
@@ -12,9 +12,32 @@ function wpCli(args: string[]): string {
   }).trim();
 }
 
+function optionExists(name: string): boolean {
+  const matches = JSON.parse(
+    wpCli(['option', 'list', `--search=${name}`, '--field=option_name', '--format=json']),
+  ) as string[];
+  return matches.includes(name);
+}
+
+function getOption(name: string): string | null {
+  return optionExists(name) ? wpCli(['option', 'get', name, '--format=json']) : null;
+}
+
+function restoreOption(name: string, value: string | null): void {
+  if (value === null) {
+    if (optionExists(name)) {
+      wpCli(['option', 'delete', name]);
+    }
+    expect(optionExists(name)).toBeFalsy();
+    return;
+  }
+  wpCli(['option', 'update', name, value, '--format=json']);
+}
+
 test.beforeAll(() => {
-  originalAgeGate = wpCli(['option', 'get', 'compadres_age_gate', '--format=json']);
-  const settings = JSON.parse(originalAgeGate) as Record<string, unknown>;
+  originalAgeGate = getOption('compadres_age_gate');
+  const settings =
+    originalAgeGate === null ? {} : (JSON.parse(originalAgeGate) as Record<string, unknown>);
   wpCli([
     'option',
     'update',
@@ -25,7 +48,9 @@ test.beforeAll(() => {
 });
 
 test.afterAll(() => {
-  wpCli(['option', 'update', 'compadres_age_gate', originalAgeGate, '--format=json']);
+  if (originalAgeGate !== undefined) {
+    restoreOption('compadres_age_gate', originalAgeGate);
+  }
 });
 
 test.beforeEach(async ({ context }) => {
