@@ -9,7 +9,7 @@ wordpress/
 wp-admin/
 wp-includes/
 wp-*.php
-index.php
+/index.php
 xmlrpc.php
 wp-content/uploads/
 wp-content/cache/
@@ -35,6 +35,7 @@ exports/
 *.sql
 *.sql.gz
 *.log
+*.errors.csv
 *.pem
 *.key
 *.p12

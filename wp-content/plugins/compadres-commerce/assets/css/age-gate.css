@@ -1,0 +1,13 @@
+body.age-gate-open { overflow: hidden; }
+.compadres-age-gate { align-items: center; background: rgb(23 18 15 / 96%); display: flex; inset: 0; justify-content: center; padding: 1rem; position: fixed; z-index: 100000; }
+.compadres-age-gate__dialog { background: #fbf7f0; border-top: 0.35rem solid #d6ad68; box-shadow: 0 1.5rem 5rem rgb(0 0 0 / 45%); color: #17120f; max-height: calc(100vh - 2rem); max-width: 42rem; overflow: auto; padding: clamp(2rem, 6vw, 4rem); width: 100%; }
+.compadres-age-gate__eyebrow { color: #76502e; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; }
+.compadres-age-gate h2 { font-family: "Cormorant Garamond", georgia, serif; font-size: clamp(2.5rem, 8vw, 4.5rem); line-height: 0.95; margin: 0 0 1.5rem; }
+.compadres-age-gate__actions { align-items: center; display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2rem; }
+.compadres-age-gate__confirm { background: #d6ad68; border-color: #8b642a; color: #17120f; }
+.compadres-age-gate__exit { font-weight: 700; padding: 1rem; }
+.compadres-age-gate__status { min-height: 1.5em; }
+
+@media (width <= 36rem) { .compadres-age-gate__actions { align-items: stretch; flex-direction: column; } .compadres-age-gate__confirm, .compadres-age-gate__exit { text-align: center; width: 100%; } }
+
+@media (prefers-reduced-motion: reduce) { .compadres-age-gate, .compadres-age-gate * { animation: none !important; scroll-behavior: auto !important; transition: none !important; } }

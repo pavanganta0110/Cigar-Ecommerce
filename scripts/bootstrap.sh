@@ -41,11 +41,51 @@ wp_cli rewrite structure '/%postname%/' --hard
 wp_cli plugin install woocommerce --version="${WOOCOMMERCE_VERSION}" --activate
 wp_cli theme activate compadres
 wp_cli plugin activate compadres-commerce
+if [[ "${APP_ENV:-local}" == "local" || "${APP_ENV:-local}" == "development" ]]; then
+  wp_cli compadres fixtures load
+fi
 wp_cli wc tool run install_pages --user="${WP_ADMIN_USER}" || true
+checkout_id="$(wp_cli option get woocommerce_checkout_page_id)"
+if [[ -n "$checkout_id" ]]; then
+  # Compliance hooks target WooCommerce's server-rendered checkout surface.
+  wp_cli post update "$checkout_id" --post_content='[woocommerce_checkout]' >/dev/null
+fi
 wp_cli option update woocommerce_enable_guest_checkout yes
 wp_cli option update woocommerce_enable_signup_and_login_from_checkout yes
 wp_cli option update woocommerce_enable_myaccount_registration yes
 wp_cli option update woocommerce_currency USD
+wp_cli option update woocommerce_coming_soon no
+wp_cli option update woocommerce_store_pages_only no
+
+create_page() {
+  local slug="$1"
+  local title="$2"
+  local content="$3"
+  if [[ -z "$(wp_cli post list --post_type=page --name="$slug" --field=ID --format=ids)" ]]; then
+    wp_cli post create \
+      --post_type=page \
+      --post_status=publish \
+      --post_title="$title" \
+      --post_name="$slug" \
+      --post_content="$content"
+  fi
+}
+
+create_page about 'About Compadres Cigars' '<p><strong>Development placeholder:</strong> Add the approved Compadres company story, team, and business information before production.</p>'
+create_page contact 'Contact' '<p><strong>Development placeholder:</strong> Add approved support contact details before production. Customer service details must not be invented.</p>'
+create_page brands 'Cigar Brands' '[compadres_brands]'
+create_page shipping-policy 'Shipping Policy' '<p><strong>Legal review required:</strong> Shipping services, destinations, timing, adult-signature terms, and carrier obligations must be approved before production.</p>'
+create_page age-policy 'Age Policy' '<p><strong>Legal review required:</strong> This store is intended only for adults age 21 and older. Final identity-verification language and procedures require legal and provider review.</p>'
+create_page privacy-policy 'Privacy Policy' '<p><strong>Legal review required:</strong> Replace this placeholder with an approved privacy notice covering actual data practices and providers before production.</p>'
+create_page returns-policy 'Returns and Refunds Policy' '<p><strong>Legal review required:</strong> Replace this placeholder with approved return, cancellation, and refund terms before production.</p>'
+create_page terms 'Terms and Conditions' '<p><strong>Legal review required:</strong> Replace this placeholder with approved store terms before production.</p>'
+create_page restrictions 'State and Local Restrictions' '<p><strong>Legal review required:</strong> Checkout uses configured server-side jurisdiction rules. No nationwide legal rule set is represented as complete.</p>'
+
+privacy_id="$(wp_cli post list --post_type=page --name=privacy-policy --field=ID --format=ids)"
+if [[ -n "$privacy_id" ]]; then
+  wp_cli post update "$privacy_id" --post_status=publish --post_name=privacy-policy >/dev/null
+fi
+
 wp_cli rewrite flush --hard
 
 printf 'WordPress: %s

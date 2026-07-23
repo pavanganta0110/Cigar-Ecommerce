@@ -3,8 +3,8 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "lint:js": "eslint wp-content/themes/compadres/assets/js",
-    "lint:css": "stylelint 'wp-content/themes/compadres/**/*.css'",
+    "lint:js": "eslint wp-content/themes/compadres/assets/js wp-content/plugins/compadres-commerce/assets/js",
+    "lint:css": "stylelint 'wp-content/themes/compadres/**/*.css' 'wp-content/plugins/compadres-commerce/**/*.css'",
     "test:e2e": "playwright test",
     "test:a11y": "playwright test --grep @a11y",
     "test": "npm run lint:js && npm run lint:css && npm run test:e2e"

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "settings": {
+    "appearanceTools": true,
+    "color": {
+      "custom": true,
+      "palette": [
+        { "slug": "ink", "name": "Ink", "color": "#17120f" },
+        { "slug": "brass", "name": "Brass", "color": "#d6ad68" },
+        { "slug": "parchment", "name": "Parchment", "color": "#f3eadc" },
+        { "slug": "cream", "name": "Cream", "color": "#fbf7f0" }
+      ]
+    },
+    "layout": { "contentSize": "48rem", "wideSize": "80rem" },
+    "spacing": { "units": ["px", "rem", "vw", "%"] },
+    "typography": { "fluid": true }
+  }
+}

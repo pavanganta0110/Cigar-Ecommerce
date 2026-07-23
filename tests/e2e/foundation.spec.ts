@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './compadres-test.js';
 
 test('homepage renders the Compadres storefront foundation', async ({ page }) => {
   await page.goto('/');
@@ -8,7 +8,7 @@ test('homepage renders the Compadres storefront foundation', async ({ page }) =>
   await expect(
     page.getByRole('heading', { level: 1, name: /shared table/i }),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: /explore the collection/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /shop all cigars/i }).first()).toBeVisible();
 });
 
 test('WooCommerce shop and account routes are available', async ({ page }) => {
