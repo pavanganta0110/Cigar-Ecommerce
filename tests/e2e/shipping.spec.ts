@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { rmSync, writeFileSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
@@ -7,6 +8,7 @@ const blockedMessage =
   'The selected shipping service cannot deliver cigars, which require an adult signature on delivery. Please choose an eligible shipping method or contact the store.';
 const scenarioOption = 'compadres_shipping_mock_scenario';
 const paymentCounterOption = 'compadres_shipping_test_payment_calls';
+const paymentProbePath = 'wp-content/plugins/compadres-commerce/shipping-test-probe.php';
 let originalAgeVerification: string | null = null;
 let originalAgeGate: string | null = null;
 let originalCod: string | null = null;
@@ -236,11 +238,7 @@ add_filter('woocommerce_payment_successful_result', static function ($result, $o
     return $result;
 }, 10, 2);
 `;
-  const encodedProbe = Buffer.from(probe).toString('base64');
-  wpCli([
-    'eval',
-    `file_put_contents(WP_PLUGIN_DIR.'/compadres-commerce/shipping-test-probe.php',base64_decode('${encodedProbe}'));`,
-  ]);
+  writeFileSync(paymentProbePath, probe);
   wpCli(['plugin', 'activate', 'compadres-commerce/shipping-test-probe.php']);
   resetPaymentCalls();
   ensureUser('shipping-store-admin', 'administrator');
@@ -261,7 +259,7 @@ test.afterAll(() => {
   } catch {
     // Already inactive.
   }
-  wpCli(['eval', `@unlink(WP_PLUGIN_DIR.'/compadres-commerce/shipping-test-probe.php');`]);
+  rmSync(paymentProbePath, { force: true });
   restoreOption('compadres_age_verification', originalAgeVerification);
   restoreOption('compadres_age_gate', originalAgeGate);
   restoreOption('woocommerce_cod_settings', originalCod);
