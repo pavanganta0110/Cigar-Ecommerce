@@ -48,8 +48,9 @@ final class AdultSignaturePolicy {
 			);
 		}
 
+		$eligible_services = $provider->eligibleServices( $context );
 		if ( '' === $selected ) {
-			$reason = array() === $provider->eligibleServices( $context )
+			$reason = array() === $eligible_services
 				? ShippingEligibilityResult::REASON_NO_ELIGIBLE_SERVICE
 				: ShippingEligibilityResult::REASON_NO_SERVICE_SELECTED;
 			return ShippingEligibilityResult::blocked(
@@ -74,7 +75,7 @@ final class AdultSignaturePolicy {
 			);
 		}
 
-		if ( ! in_array( $selected, $provider->eligibleServices( $context ), true ) ) {
+		if ( ! in_array( $selected, $eligible_services, true ) ) {
 			return ShippingEligibilityResult::blocked(
 				$requires,
 				true,
