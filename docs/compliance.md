@@ -287,3 +287,13 @@ The top-level WordPress administration **Compadres Audit Log** page requires `co
 `compadres_export_audit_logs` is reserved for store administrators. CSV export is not currently implemented. When added, it must require that capability and a nonce, preserve redaction, stream bounded batches, and audit the export. The page exposes no public REST route and has no state-changing action requiring a nonce today.
 
 Audit records may contain customer or staff operational identifiers even after redaction. Access must be reviewed periodically, retention periods require legal and privacy approval, exports require equivalent controls, and production backups must be encrypted and access controlled.
+
+## Checkout duplicate-order protection
+
+`CheckoutOrchestrator` guards order creation against a double-submitted or concurrently retried checkout request. It runs at the earliest priority on `woocommerce_checkout_create_order`, before the restriction, age-verification, shipping, and tax checkout hooks, so a locked or already-completed attempt never reaches any of those checks a second time for the same cart.
+
+A cart fingerprint is derived from normalized item product/variation IDs and quantities, the destination country/state/postal code, and the chosen shipping method. A first submission for a given fingerprint acquires a session-scoped lock; a concurrent resubmission of the identical fingerprint is blocked with a generic "already being processed" message while the lock holds, and a resubmission after the order was created is blocked with a generic "already placed" message. Neither message discloses the order ID to the browser; the ID is recorded only in the audit event (`checkout.duplicate_submission_blocked`).
+
+The lock is not released explicitly on failure. Checkout validation failures raised by the restriction, age, shipping, or tax hooks happen inside independent WordPress callbacks this guard does not control end-to-end, so it cannot wrap them in a try/finally. Instead the lock holds for a short, bounded TTL and then self-expires, which is what allows a customer to retry after a recoverable failure without ever letting two orders be created from the same submitted cart within the lease window. A completed order's record is retained past the lock TTL so a later resubmission of the same fingerprint is still recognized as a duplicate rather than treated as a fresh attempt.
+
+This guard is additive to, and does not replace, the restriction/age/shipping/tax checkout hooks: each of those remains the authority for whether a given cart, address, and shipping selection is compliant. It only prevents the same compliant (or non-compliant) submission from producing more than one order.
