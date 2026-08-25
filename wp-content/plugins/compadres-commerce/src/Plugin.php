@@ -21,6 +21,7 @@ use Compadres\Commerce\Restrictions\RestrictionFixtureCommand;
 use Compadres\Commerce\Restrictions\RestrictionMigration;
 use Compadres\Commerce\Security\RoleManager;
 use Compadres\Commerce\Shipping\CheckoutShippingIntegration;
+use Compadres\Commerce\Shipping\FedExShippingMethod;
 use Compadres\Commerce\Shipping\MockShippingMethod;
 use Compadres\Commerce\Shipping\ShippingAdmin;
 
@@ -101,15 +102,15 @@ final class Plugin {
 	}
 
 	/**
-	 * Register the development-only mock shipping method. It is automatically
-	 * unavailable in production and only available in explicitly enabled
-	 * staging; see WordPressShippingRuntime::mockMethodAllowed().
+	 * Register the available shipping adapters. Each method performs its own
+	 * environment and configuration gate before exposing any rates.
 	 *
 	 * @param array<string, class-string> $methods
 	 * @return array<string, class-string>
 	 */
 	public function registerShippingMethods( array $methods ): array {
-		$methods[ MockShippingMethod::METHOD_ID ] = MockShippingMethod::class;
+		$methods[ MockShippingMethod::METHOD_ID ]  = MockShippingMethod::class;
+		$methods[ FedExShippingMethod::METHOD_ID ] = FedExShippingMethod::class;
 		return $methods;
 	}
 }
