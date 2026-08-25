@@ -287,3 +287,13 @@ The top-level WordPress administration **Compadres Audit Log** page requires `co
 `compadres_export_audit_logs` is reserved for store administrators. CSV export is not currently implemented. When added, it must require that capability and a nonce, preserve redaction, stream bounded batches, and audit the export. The page exposes no public REST route and has no state-changing action requiring a nonce today.
 
 Audit records may contain customer or staff operational identifiers even after redaction. Access must be reviewed periodically, retention periods require legal and privacy approval, exports require equivalent controls, and production backups must be encrypted and access controlled.
+
+## Order snapshot
+
+Every order created through checkout receives one canonical, versioned snapshot (`_compadres_order_snapshot`, with `_compadres_order_snapshot_version`) written once, immediately after every compliance module has already written its own order meta. The snapshot is a historical record, not a compliance gate: unlike the restriction, age, shipping, and tax checkout hooks, a failure while building or saving it is audited (`order.snapshot_failed`) and swallowed rather than raised, so it can never block an order from being placed. It is also idempotent — a snapshot is written at most once per order.
+
+The snapshot exists specifically to freeze the values a later catalog change could otherwise silently rewrite in historical reporting: each line item's SKU, product name, and brand name/slug are captured from the product at order time, not read live from the current product on every future report. Order totals (subtotal, discount, shipping, tax, and grand total) and the customer type (guest or registered) are captured alongside them.
+
+The `compliance` section of the snapshot is populated generically: every `_compadres_`-prefixed order meta key any compliance module has already written (age verification, restrictions, shipping, tax, and any added later) is included with its prefix stripped, except the snapshot's own keys and any date-of-birth key, which is excluded as a defense-in-depth backstop — the sole authority for what personal data is safe to persist remains the module that collects it, such as age verification's explicit deletion of the transient date-of-birth value before order creation. This means a new compliance module's order meta is picked up automatically without this snapshot needing to change.
+
+This is scoped to orders created through checkout (`woocommerce_checkout_order_created`); orders created directly in wp-admin or through the REST API do not currently receive a snapshot.
