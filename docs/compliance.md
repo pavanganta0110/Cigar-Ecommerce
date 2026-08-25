@@ -287,3 +287,11 @@ The top-level WordPress administration **Compadres Audit Log** page requires `co
 `compadres_export_audit_logs` is reserved for store administrators. CSV export is not currently implemented. When added, it must require that capability and a nonce, preserve redaction, stream bounded batches, and audit the export. The page exposes no public REST route and has no state-changing action requiring a nonce today.
 
 Audit records may contain customer or staff operational identifiers even after redaction. Access must be reviewed periodically, retention periods require legal and privacy approval, exports require equivalent controls, and production backups must be encrypted and access controlled.
+
+## Operations dashboard
+
+The **Compadres Operations** page (`compadres_view_audit_logs`, same capability as the audit log) is a single landing page for staff: it shows each registered integration's health and a list of recent orders that need attention, so nobody has to already know which settings screen or order-list filter to open.
+
+Integration status is computed independently of each integration's own settings-page display logic, using the same `IntegrationStatus` value object: `disabled` (not configured), `sandbox` (a development-only mock is active), or `connected` with a separate production-approval flag, so "configured" and "approved for production" are never conflated. This page is scoped to what is registered today — age verification and shipping. A payment or tax integration added later should add its own health description and blocked-order query rather than this page guessing at an interface it does not yet know.
+
+"Orders needing attention" queries the last 30 days (bounded to 50 results) for orders whose age-verification status is failed, unresolved (manual review), or unavailable, or whose shipping eligibility is blocked. It reads the same order meta the checkout hooks already write; it introduces no new state.
