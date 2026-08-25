@@ -15,6 +15,7 @@ use Compadres\Commerce\Catalog\FixtureCommand;
 use Compadres\Commerce\Catalog\ProductMetadata;
 use Compadres\Commerce\Compliance\AgeGate;
 use Compadres\Commerce\Infrastructure\Environment;
+use Compadres\Commerce\Notifications\EmailBranding;
 use Compadres\Commerce\Restrictions\CheckoutRestrictionIntegration;
 use Compadres\Commerce\Restrictions\RestrictionAdmin;
 use Compadres\Commerce\Restrictions\RestrictionFixtureCommand;
@@ -57,6 +58,7 @@ final class Plugin {
 		( new ProductMetadata() )->registerHooks();
 		( new CatalogFilters() )->registerHooks();
 		( new AgeGate() )->registerHooks();
+		( new EmailBranding() )->registerHooks();
 		( new CheckoutIntegration() )->registerHooks();
 		( new CheckoutRestrictionIntegration() )->registerHooks();
 		( new RestrictionAdmin() )->registerHooks();
