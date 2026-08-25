@@ -15,6 +15,8 @@ use Compadres\Commerce\Catalog\FixtureCommand;
 use Compadres\Commerce\Catalog\ProductMetadata;
 use Compadres\Commerce\Compliance\AgeGate;
 use Compadres\Commerce\Infrastructure\Environment;
+use Compadres\Commerce\Privacy\PersonalDataEraser;
+use Compadres\Commerce\Privacy\PersonalDataExporter;
 use Compadres\Commerce\Restrictions\CheckoutRestrictionIntegration;
 use Compadres\Commerce\Restrictions\RestrictionAdmin;
 use Compadres\Commerce\Restrictions\RestrictionFixtureCommand;
@@ -61,6 +63,8 @@ final class Plugin {
 		( new CheckoutRestrictionIntegration() )->registerHooks();
 		( new RestrictionAdmin() )->registerHooks();
 		( new AgeVerificationAdmin() )->registerHooks();
+		( new PersonalDataExporter() )->registerHooks();
+		( new PersonalDataEraser() )->registerHooks();
 		( new ShippingAdmin() )->register();
 		( new CheckoutShippingIntegration() )->register();
 		add_filter( 'woocommerce_shipping_methods', array( $this, 'registerShippingMethods' ) );
