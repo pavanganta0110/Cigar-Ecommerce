@@ -20,6 +20,7 @@ use Compadres\Commerce\Compliance\AgeGate;
 use Compadres\Commerce\Infrastructure\Environment;
 use Compadres\Commerce\Notifications\EmailBranding;
 use Compadres\Commerce\Orders\OrderSnapshotWriter;
+use Compadres\Commerce\Payments\GlobalPaymentsRuntime;
 use Compadres\Commerce\Privacy\PersonalDataEraser;
 use Compadres\Commerce\Privacy\PersonalDataExporter;
 use Compadres\Commerce\Reporting\SalesTaxAdmin;
@@ -87,6 +88,7 @@ final class Plugin {
 		( new OrderTrackingAdmin() )->registerHooks();
 		( new CheckoutShippingIntegration() )->register();
 		add_filter( 'woocommerce_shipping_methods', array( $this, 'registerShippingMethods' ) );
+		GlobalPaymentsRuntime::create()->registerHooks();
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			\WP_CLI::add_command( 'compadres fixtures', new FixtureCommand() );
 			\WP_CLI::add_command( 'compadres catalog', new CatalogCommand() );
