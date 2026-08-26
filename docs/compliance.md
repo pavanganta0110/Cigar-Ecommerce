@@ -386,6 +386,12 @@ The plugin registers several gateway product lines and wallet/BNPL sub-gateways 
 
 As of this integration, only the fail-closed gating, settings sync, and gateway-visibility filtering are implemented and tested. No real Global Payments sandbox App Id/App Key has been supplied yet, so `PaymentHealth::describe()` reports payments as `disabled` until sandbox credentials are configured, and as `sandbox` (not production-ready) once they are, exactly like every other integration in this project before it has been live-verified against the provider's own sandbox.
 
+### Refunds
+
+Refund transactions are not implemented in this repository. The Global Payments plugin's `GpApiGateway` already declares WooCommerce `refunds` support and implements its own `process_refund()`, so a staff member issuing a refund from the standard WooCommerce order-edit screen already calls Global Payments' own refund API through the plugin, exactly the same delegation this project uses for the charge itself. No custom refund-transaction code, capability gate, or eligibility check has been added, because none is needed: WooCommerce's own order-edit capability check already governs who can trigger it, and giving money back carries none of the tobacco-sale eligibility concerns a new charge does.
+
+`PaymentAudit` adds only a bounded audit trail entry, `payments.refund_recorded`, on WooCommerce's `woocommerce_order_refunded` hook, which fires only after a refund object has actually been created (i.e. after any gateway call has already succeeded). Its context is limited to the refund ID, amount, currency, staff-entered reason, and payment method identifier; no card data, tokens, or provider payloads are logged. The Compadres Operations dashboard's **Recent refunds** table is a read-only view of the last 30 days of refunds via `wc_get_orders( array( 'type' => 'shop_order_refund', ... ) )`; it introduces no new state and does not call Global Payments.
+
 ## Compadres staff branding
 
 Staff login and administration surfaces use Compadres Cigars branding. The WordPress logo, WordPress footer/version text, browser-title suffix, and core update branding notice are removed from the staff-facing portal. This is presentation hardening only: WordPress and WooCommerce remain the underlying application platform, and capability/nonces remain the actual authorization controls.
