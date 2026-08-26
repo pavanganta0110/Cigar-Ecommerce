@@ -15,6 +15,7 @@ use Compadres\Commerce\Shipping\OrderShippingMeta;
 use Compadres\Commerce\Shipping\OrderTracking;
 use Compadres\Commerce\Shipping\WordPressShippingRuntime;
 use WC_Order;
+use WC_Order_Refund;
 
 /**
  * A single landing page summarizing integration health and orders that need
@@ -56,6 +57,7 @@ final class OperationsDashboard {
 		$statuses  = $this->integrationStatuses();
 		$orders    = $this->attentionOrders();
 		$shipments = $this->recentShipments();
+		$refunds   = $this->recentRefunds();
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Compadres Operations', 'compadres-commerce' ); ?></h1>
@@ -141,6 +143,39 @@ final class OperationsDashboard {
 					<?php endforeach; ?>
 				</tbody>
 			</table>
+
+			<h2><?php esc_html_e( 'Recent refunds', 'compadres-commerce' ); ?></h2>
+			<p><?php esc_html_e( 'Refunds created in the last 30 days. The refund itself is processed by the order\'s payment gateway; this table is a read-only record.', 'compadres-commerce' ); ?></p>
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Order', 'compadres-commerce' ); ?></th>
+						<th><?php esc_html_e( 'Date', 'compadres-commerce' ); ?></th>
+						<th><?php esc_html_e( 'Amount', 'compadres-commerce' ); ?></th>
+						<th><?php esc_html_e( 'Reason', 'compadres-commerce' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php if ( array() === $refunds ) : ?>
+						<tr><td colspan="4"><?php esc_html_e( 'No refunds recorded yet.', 'compadres-commerce' ); ?></td></tr>
+					<?php endif; ?>
+					<?php foreach ( $refunds as $refund ) : ?>
+						<?php $parent = wc_get_order( $refund->get_parent_id() ); ?>
+						<tr>
+							<td>
+								<?php if ( $parent instanceof WC_Order ) : ?>
+									<a href="<?php echo esc_url( $parent->get_edit_order_url() ); ?>">#<?php echo esc_html( $parent->get_order_number() ); ?></a>
+								<?php else : ?>
+									<?php echo esc_html( (string) $refund->get_parent_id() ); ?>
+								<?php endif; ?>
+							</td>
+							<td><?php echo esc_html( (string) $refund->get_date_created() ); ?></td>
+							<td><?php echo wp_kses_post( wc_price( (float) $refund->get_amount(), array( 'currency' => $refund->get_currency() ) ) ); ?></td>
+							<td><?php echo esc_html( $refund->get_reason() ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
 		</div>
 		<?php
 	}
@@ -196,5 +231,21 @@ final class OperationsDashboard {
 				'meta_compare' => 'EXISTS',
 			)
 		);
+	}
+
+	/** @return list<WC_Order_Refund> */
+	private function recentRefunds(): array {
+		/** @var list<WC_Order_Refund> $refunds */
+		$refunds = wc_get_orders(
+			array(
+				'type'         => 'shop_order_refund',
+				'limit'        => self::RESULT_SIZE,
+				'orderby'      => 'date',
+				'order'        => 'DESC',
+				'date_created' => '>' . strtotime( self::LOOKBACK ),
+				'return'       => 'objects',
+			)
+		);
+		return $refunds;
 	}
 }
