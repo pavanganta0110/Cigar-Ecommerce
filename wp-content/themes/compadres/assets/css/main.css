@@ -87,6 +87,45 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .woocommerce ul.products li.product .woocommerce-loop-product__title, .woocommerce div.product .product_title { font-family: var(--font-display); font-size: 1.6rem; }
 .woocommerce [id="compadres_date_of_birth-description"] { color: #3a4048; }
 
+/*
+ * WooCommerce's own stylesheet ships a default (purple) button color at
+ * near-zero specificity via `:where()`, on the assumption that a full
+ * block theme's theme.json button styles will take over instead
+ * (`wc_block_theme_has_styles_for_element()` requires `wp_is_block_theme()`).
+ * This is a classic theme, so that hand-off never triggers; matching
+ * WooCommerce's own selector groups (including the `.alt` variant it
+ * applies to primary actions like Add to Cart) is what actually overrides it.
+ */
+.woocommerce a.button, .woocommerce button.button, .woocommerce input.button, .woocommerce #respond input#submit,
+.woocommerce a.button.alt, .woocommerce button.button.alt, .woocommerce input.button.alt, .woocommerce #respond input#submit.alt,
+.woocommerce a.added_to_cart {
+  background: var(--color-brass);
+  border: 1px solid var(--color-brass);
+  color: var(--color-ink);
+}
+
+.woocommerce a.button:hover, .woocommerce button.button:hover, .woocommerce input.button:hover, .woocommerce #respond input#submit:hover,
+.woocommerce a.button.alt:hover, .woocommerce button.button.alt:hover, .woocommerce input.button.alt:hover, .woocommerce #respond input#submit.alt:hover,
+.woocommerce a.added_to_cart:hover {
+  background: var(--color-espresso);
+  border-color: var(--color-espresso);
+  color: var(--color-parchment);
+}
+.woocommerce div.product form.cart .quantity input.qty { border: 1px solid #d8c8b7; height: 100%; padding: 0 0.75rem; }
+.woocommerce div.product form.cart .quantity, .woocommerce div.product form.cart div.quantity { display: inline-flex; height: 3.1rem; margin-right: 0.75rem; vertical-align: top; }
+.woocommerce div.product p.price, .woocommerce div.product span.price { color: var(--color-copper); font-family: var(--font-display); font-size: 1.9rem; }
+.woocommerce div.product .product_meta { color: #6b5c4d; font-size: 0.85rem; margin-top: 1.5rem; }
+
+.woocommerce-account .woocommerce-MyAccount-navigation, .woocommerce-account .woocommerce-MyAccount-content { vertical-align: top; }
+.woocommerce-account .woocommerce-MyAccount-navigation { display: inline-block; margin-right: 3rem; width: 16rem; }
+.woocommerce-account .woocommerce-MyAccount-content { display: inline-block; max-width: 40rem; }
+.woocommerce-MyAccount-navigation ul { background: var(--color-white); border: 1px solid #e0d5c8; list-style: none; margin: 0; padding: 0; }
+.woocommerce-MyAccount-navigation li { border-bottom: 1px solid #e8ddd0; }
+.woocommerce-MyAccount-navigation li:last-child { border-bottom: 0; }
+.woocommerce-MyAccount-navigation a { display: block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; padding: 0.9rem 1.25rem; text-decoration: none; text-transform: uppercase; }
+.woocommerce-MyAccount-navigation li.is-active { background: var(--color-ink); }
+.woocommerce-MyAccount-navigation li.is-active a { color: var(--color-brass); }
+
 @media (width <= 800px) {
   .site-header__inner { grid-template-columns: 1fr auto auto; gap: 1rem; }
   .nav-toggle { background: transparent; color: var(--color-white); display: inline-block; padding: 0.7rem; }
@@ -98,6 +137,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   .brand-hero { grid-template-columns: 1fr; }
   .site-footer__grid { grid-template-columns: 1fr; }
   .site-footer nav { flex-direction: column; justify-content: flex-start; }
+  .woocommerce-account .woocommerce-MyAccount-navigation, .woocommerce-account .woocommerce-MyAccount-content { display: block; margin-right: 0; width: 100%; }
+  .woocommerce-account .woocommerce-MyAccount-navigation { margin-bottom: 2rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
