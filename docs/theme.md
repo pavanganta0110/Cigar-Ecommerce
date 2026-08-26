@@ -19,6 +19,10 @@ The theme declares WooCommerce support and uses WooCommerce hooks, shortcodes, A
 
 There are currently **no copied WooCommerce core template overrides**, so there is no upstream template-version inventory to maintain. `woocommerce.php` is the theme's supported wrapper, and `taxonomy-compadres_brand.php` is a WordPress taxonomy template owned by this project. If a file is later copied from `woocommerce/templates`, record its upstream `@version` here and verify it on every WooCommerce update.
 
+## Transactional email branding
+
+`Notifications\EmailBranding` sets the theme's brand palette (from `theme.json`: ink `#17120f`, parchment `#f3eadc`, cream `#fbf7f0`) and an Adult Signature Required footer notice as the *defaults* for WooCommerce's transactional emails (order confirmation, processing, completed, and so on), registered against `default_option_woocommerce_email_*`. This is not a template override: it changes what a freshly installed store's emails look like before anyone has configured Settings → WooCommerce → Emails, and a store administrator who has already saved a choice on that screen keeps it — the filter only supplies a value when WordPress has no saved option to return. The individual email templates and their content remain entirely WooCommerce's own.
+
 ## Empty states and fixtures
 
 Homepage commercial sections query published WooCommerce data. Empty catalogs render clear preparation messages. Fictional fixtures are loaded only through the development WP-CLI commands documented with the plugin; production never loads them automatically.

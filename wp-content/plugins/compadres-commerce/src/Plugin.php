@@ -18,6 +18,7 @@ use Compadres\Commerce\Catalog\ProductMetadata;
 use Compadres\Commerce\Checkout\CheckoutOrchestrator;
 use Compadres\Commerce\Compliance\AgeGate;
 use Compadres\Commerce\Infrastructure\Environment;
+use Compadres\Commerce\Notifications\EmailBranding;
 use Compadres\Commerce\Orders\OrderSnapshotWriter;
 use Compadres\Commerce\Reporting\SalesTaxAdmin;
 use Compadres\Commerce\Restrictions\CheckoutRestrictionIntegration;
@@ -69,6 +70,7 @@ final class Plugin {
 		( new ProductMetadata() )->registerHooks();
 		( new CatalogFilters() )->registerHooks();
 		( new AgeGate() )->registerHooks();
+		( new EmailBranding() )->registerHooks();
 		( new CheckoutOrchestrator() )->registerHooks();
 		( new CheckoutIntegration() )->registerHooks();
 		( new CheckoutRestrictionIntegration() )->registerHooks();
