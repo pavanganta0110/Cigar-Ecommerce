@@ -20,7 +20,7 @@ final class ProviderConfiguration {
 	public static function fromArray( array $values ): self {
 		return new self(
 			(bool) ( $values['enabled'] ?? false ),
-			in_array( $values['provider'] ?? '', array( 'agechecker', 'mock' ), true ) ? (string) $values['provider'] : '',
+			in_array( $values['provider'] ?? '', array( 'agechecker', 'mock', 'self_attestation' ), true ) ? (string) $values['provider'] : '',
 			(bool) ( $values['requires_date_of_birth'] ?? false ),
 			isset( $values['hosted_url_template'] ) ? trim( (string) $values['hosted_url_template'] ) : '',
 			(bool) ( $values['production_approved'] ?? false ),

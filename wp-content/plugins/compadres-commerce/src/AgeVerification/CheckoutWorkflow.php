@@ -9,12 +9,13 @@ final class CheckoutWorkflow {
 	public function __construct(
 		private AgeVerificationService $service,
 		private CheckoutGuard $guard,
-		private bool $requiresDateOfBirth
+		private bool $requiresDateOfBirth,
+		private bool $requiresAttestation = false
 	) {}
 
 	/** @param array<string, mixed> $checkout */
 	public function verify( array $checkout, string $return_url ): CheckoutDecision {
-		$request = VerificationRequest::fromCheckout( $checkout, $this->requiresDateOfBirth );
+		$request = VerificationRequest::fromCheckout( $checkout, $this->requiresDateOfBirth, $this->requiresAttestation );
 		$result  = $this->service->verify( $request );
 		return $this->guard->decision( $result, $return_url );
 	}
