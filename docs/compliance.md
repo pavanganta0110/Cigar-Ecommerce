@@ -234,6 +234,7 @@ Only these shipping events are emitted through the redacting audit service:
 - `shipping.eligibility_checked`
 - `shipping.checkout_blocked`
 - `shipping.settings_updated`
+- `shipping.tracking_number_updated`
 
 Audit context is bounded to normalized provider/service support, result, and enforcement phase. It excludes full addresses, cart contents, carrier payloads, raw exceptions, authorization values, credentials, and customer secrets.
 
@@ -249,6 +250,12 @@ node_modules/.bin/playwright test tests/e2e/shipping.spec.ts --project=mobile-ch
 ```
 
 `tests/e2e/shipping.spec.ts` creates and removes an isolated U.S. test zone, temporarily makes the fictional product shippable, uses Cash on Delivery only as a gateway-boundary probe, and restores checkout, product, age, payment, scenario, and restriction state. It covers eligible, unsupported, unavailable, no-service, forged-value, geographic-ordering, age-ordering, metadata/administration, production prohibition, payment blocking, desktop/mobile, audit privacy, and focused Axe behavior. It never contacts a real carrier.
+
+### Manually recorded tracking number
+
+No code in this repository creates a FedEx shipment, purchases a label, or calls FedEx's Ship or Track/Visibility APIs; the shipping integration is scoped to rate quoting and Adult Signature Required eligibility only, per the production prohibition above. A tracking number therefore only exists once a staff member creates the label in FedEx's own system, exactly as they would without this project.
+
+`OrderTrackingAdmin` gives staff one place to record that resulting tracking number — a field on the WooCommerce order edit screen, capability-gated to `edit_shop_orders` and nonce-protected per order — and surfaces it in three places once saved: a column on the admin orders list (registered for both HPOS and legacy order storage, since only one pair of hooks fires depending on that setting), the customer's own order-details view, and the order edit screen itself. All three link to FedEx's public tracking page; none of them poll FedEx or store a carrier response. `OrderTracking::isValid()` bounds the stored value to 6–34 uppercase alphanumeric characters before it is ever rendered into a link, so a malformed or forged value fails closed to no link rather than an unsafe URL.
 
 ## Administrative audit logging
 
@@ -297,6 +304,26 @@ A cart fingerprint is derived from normalized item product/variation IDs and qua
 The lock is not released explicitly on failure. Checkout validation failures raised by the restriction, age, shipping, or tax hooks happen inside independent WordPress callbacks this guard does not control end-to-end, so it cannot wrap them in a try/finally. Instead the lock holds for a short, bounded TTL and then self-expires, which is what allows a customer to retry after a recoverable failure without ever letting two orders be created from the same submitted cart within the lease window. A completed order's record is retained past the lock TTL so a later resubmission of the same fingerprint is still recognized as a duplicate rather than treated as a fresh attempt.
 
 This guard is additive to, and does not replace, the restriction/age/shipping/tax checkout hooks: each of those remains the authority for whether a given cart, address, and shipping selection is compliant. It only prevents the same compliant (or non-compliant) submission from producing more than one order.
+
+## Order snapshot
+
+Every order created through checkout receives one canonical, versioned snapshot (`_compadres_order_snapshot`, with `_compadres_order_snapshot_version`) written once, immediately after every compliance module has already written its own order meta. The snapshot is a historical record, not a compliance gate: unlike the restriction, age, shipping, and tax checkout hooks, a failure while building or saving it is audited (`order.snapshot_failed`) and swallowed rather than raised, so it can never block an order from being placed. It is also idempotent — a snapshot is written at most once per order.
+
+The snapshot exists specifically to freeze the values a later catalog change could otherwise silently rewrite in historical reporting: each line item's SKU, product name, and brand name/slug are captured from the product at order time, not read live from the current product on every future report. Order totals (subtotal, discount, shipping, tax, and grand total) and the customer type (guest or registered) are captured alongside them.
+
+The `compliance` section of the snapshot is populated generically: every `_compadres_`-prefixed order meta key any compliance module has already written (age verification, restrictions, shipping, tax, and any added later) is included with its prefix stripped, except the snapshot's own keys and any date-of-birth key, which is excluded as a defense-in-depth backstop — the sole authority for what personal data is safe to persist remains the module that collects it, such as age verification's explicit deletion of the transient date-of-birth value before order creation. This means a new compliance module's order meta is picked up automatically without this snapshot needing to change.
+
+This is scoped to orders created through checkout (`woocommerce_checkout_order_created`); orders created directly in wp-admin or through the REST API do not currently receive a snapshot.
+
+## Operations dashboard
+
+The **Compadres Operations** page (`compadres_view_audit_logs`, same capability as the audit log) is a single landing page for staff: it shows each registered integration's health and a list of recent orders that need attention, so nobody has to already know which settings screen or order-list filter to open.
+
+Integration status is computed independently of each integration's own settings-page display logic, using the same `IntegrationStatus` value object: `disabled` (not configured), `sandbox` (a development-only mock is active), or `connected` with a separate production-approval flag, so "configured" and "approved for production" are never conflated. This page is scoped to what is registered today — age verification and shipping. A payment or tax integration added later should add its own health description and blocked-order query rather than this page guessing at an interface it does not yet know.
+
+"Orders needing attention" queries the last 30 days (bounded to 50 results) for orders whose age-verification status is failed, unresolved (manual review), or unavailable, or whose shipping eligibility is blocked. It reads the same order meta the checkout hooks already write; it introduces no new state.
+
+"Recent shipments" queries the same 30-day, 50-result window for orders carrying a recorded tracking number (`OrderTracking::META_KEY`), linking each to FedEx's public tracking page exactly as the order edit screen and admin orders-list column do. It reads that same manually recorded value; it does not call FedEx or poll for status.
 
 ## Manual sales tax and reporting
 
