@@ -315,6 +315,16 @@ The `compliance` section of the snapshot is populated generically: every `_compa
 
 This is scoped to orders created through checkout (`woocommerce_checkout_order_created`); orders created directly in wp-admin or through the REST API do not currently receive a snapshot.
 
+## Operations dashboard
+
+The **Compadres Operations** page (`compadres_view_audit_logs`, same capability as the audit log) is a single landing page for staff: it shows each registered integration's health and a list of recent orders that need attention, so nobody has to already know which settings screen or order-list filter to open.
+
+Integration status is computed independently of each integration's own settings-page display logic, using the same `IntegrationStatus` value object: `disabled` (not configured), `sandbox` (a development-only mock is active), or `connected` with a separate production-approval flag, so "configured" and "approved for production" are never conflated. This page is scoped to what is registered today — age verification and shipping. A payment or tax integration added later should add its own health description and blocked-order query rather than this page guessing at an interface it does not yet know.
+
+"Orders needing attention" queries the last 30 days (bounded to 50 results) for orders whose age-verification status is failed, unresolved (manual review), or unavailable, or whose shipping eligibility is blocked. It reads the same order meta the checkout hooks already write; it introduces no new state.
+
+"Recent shipments" queries the same 30-day, 50-result window for orders carrying a recorded tracking number (`OrderTracking::META_KEY`), linking each to FedEx's public tracking page exactly as the order edit screen and admin orders-list column do. It reads that same manually recorded value; it does not call FedEx or poll for status.
+
 ## Personal data export and erasure
 
 WordPress's built-in personal-data export and erasure tools (Settings → Privacy → Export/Erase Personal Data) already cover the standard order fields through WooCommerce's own exporter and eraser. `PersonalDataExporter` and `PersonalDataEraser` add only what this plugin stores on top of that: age-verification status, restriction/shipping/tax rule outcomes, on the customer's own orders, matched by billing email.

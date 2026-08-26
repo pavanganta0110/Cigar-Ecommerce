@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Compadres\Commerce;
 
 use Compadres\Commerce\Admin\AdminBranding;
+use Compadres\Commerce\Admin\OperationsDashboard;
 use Compadres\Commerce\AgeVerification\AgeVerificationAdmin;
 use Compadres\Commerce\AgeVerification\CheckoutIntegration;
 use Compadres\Commerce\Audit\AuditAdmin;
@@ -65,6 +66,7 @@ final class Plugin {
 		add_action( 'init', array( $this, 'ensureRoles' ), 5 );
 		( new AdminBranding() )->registerHooks();
 		( new AuditAdmin() )->registerHooks();
+		( new OperationsDashboard() )->registerHooks();
 		( new BrandTaxonomy() )->registerHooks();
 		( new ProductMetadata() )->registerHooks();
 		( new CatalogFilters() )->registerHooks();
