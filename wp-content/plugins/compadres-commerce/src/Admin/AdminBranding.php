@@ -12,7 +12,7 @@ final class AdminBranding {
 	private const PORTAL_NAME = 'Compadres Cigars Admin Portal';
 
 	public function registerHooks(): void {
-		add_action( 'admin_init', array( $this, 'removeCoreBrandingNoticesForNonAdministrators' ) );
+		add_action( 'admin_init', array( $this, 'removeCoreUpdateNag' ) );
 		add_action( 'admin_bar_menu', array( $this, 'removeWordPressLogo' ), 999 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueueStyles' ) );
 		add_action( 'login_enqueue_scripts', array( $this, 'enqueueStyles' ) );
@@ -28,11 +28,15 @@ final class AdminBranding {
 		$admin_bar->remove_node( 'wp-logo' );
 	}
 
-	public function removeCoreBrandingNoticesForNonAdministrators(): void {
-		if ( ! current_user_can( 'update_core' ) ) {
-			remove_action( 'admin_notices', 'update_nag', 3 );
-			remove_action( 'network_admin_notices', 'update_nag', 3 );
-		}
+	/**
+	 * Removes the "WordPress X is available" nag banner for every staff
+	 * role, including administrators. Update capability and the Updates
+	 * screen itself are unaffected; this only hides the ambient nag banner
+	 * so the staff-facing portal reads as Compadres, not WordPress.
+	 */
+	public function removeCoreUpdateNag(): void {
+		remove_action( 'admin_notices', 'update_nag', 3 );
+		remove_action( 'network_admin_notices', 'update_nag', 3 );
 	}
 
 	public function enqueueStyles(): void {
