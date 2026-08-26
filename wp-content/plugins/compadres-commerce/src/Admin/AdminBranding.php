@@ -13,6 +13,7 @@ final class AdminBranding {
 
 	public function registerHooks(): void {
 		add_action( 'admin_init', array( $this, 'removeCoreUpdateNag' ) );
+		add_action( 'admin_menu', array( $this, 'renameWooCommerceMenu' ), 999 );
 		add_action( 'admin_bar_menu', array( $this, 'removeWordPressLogo' ), 999 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueueStyles' ) );
 		add_action( 'login_enqueue_scripts', array( $this, 'enqueueStyles' ) );
@@ -26,6 +27,29 @@ final class AdminBranding {
 
 	public function removeWordPressLogo( WP_Admin_Bar $admin_bar ): void {
 		$admin_bar->remove_node( 'wp-logo' );
+	}
+
+	/**
+	 * Relabels WooCommerce's own top-level admin menu item and swaps its
+	 * logo for a neutral dashicon, so the sidebar reads as a Compadres
+	 * store section rather than the WooCommerce brand. The underlying
+	 * page (wc-admin Home, plus Orders/Customers/Reports/Settings/Status/
+	 * Extensions beneath it) and every capability check are untouched;
+	 * this only changes the label and icon shown to staff.
+	 */
+	public function renameWooCommerceMenu(): void {
+		global $menu;
+		if ( ! is_array( $menu ) ) {
+			return;
+		}
+		foreach ( $menu as $index => $item ) {
+			if ( isset( $item[2] ) && 'woocommerce' === $item[2] ) {
+				// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Relabeling an existing top-level admin menu entry is WordPress's own documented mechanism; there is no filter for it.
+				$menu[ $index ][0] = __( 'Store', 'compadres-commerce' );
+				// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Same as above.
+				$menu[ $index ][6] = 'dashicons-store';
+			}
+		}
 	}
 
 	/**
