@@ -23,7 +23,7 @@ final class AgeVerificationSettings {
 	 *  @return array<string, mixed>
 	 */
 	public static function sanitize( array $values ): array {
-		$provider = isset( $values['provider'] ) && in_array( $values['provider'], array( '', 'agechecker', 'mock' ), true ) ? (string) $values['provider'] : '';
+		$provider = isset( $values['provider'] ) && in_array( $values['provider'], array( '', 'agechecker', 'mock', 'self_attestation' ), true ) ? (string) $values['provider'] : '';
 		$template = isset( $values['hosted_url_template'] ) ? trim( (string) $values['hosted_url_template'] ) : '';
 		if ( '' !== $template && ! self::approvedHostedTemplate( $template ) ) {
 			$template = '';
