@@ -315,6 +315,16 @@ The `compliance` section of the snapshot is populated generically: every `_compa
 
 This is scoped to orders created through checkout (`woocommerce_checkout_order_created`); orders created directly in wp-admin or through the REST API do not currently receive a snapshot.
 
+## Operations dashboard
+
+The **Compadres Operations** page (`compadres_view_audit_logs`, same capability as the audit log) is a single landing page for staff: it shows each registered integration's health and a list of recent orders that need attention, so nobody has to already know which settings screen or order-list filter to open.
+
+Integration status is computed independently of each integration's own settings-page display logic, using the same `IntegrationStatus` value object: `disabled` (not configured), `sandbox` (a development-only mock is active), or `connected` with a separate production-approval flag, so "configured" and "approved for production" are never conflated. This page is scoped to what is registered today — age verification and shipping. A payment or tax integration added later should add its own health description and blocked-order query rather than this page guessing at an interface it does not yet know.
+
+"Orders needing attention" queries the last 30 days (bounded to 50 results) for orders whose age-verification status is failed, unresolved (manual review), or unavailable, or whose shipping eligibility is blocked. It reads the same order meta the checkout hooks already write; it introduces no new state.
+
+"Recent shipments" queries the same 30-day, 50-result window for orders carrying a recorded tracking number (`OrderTracking::META_KEY`), linking each to FedEx's public tracking page exactly as the order edit screen and admin orders-list column do. It reads that same manually recorded value; it does not call FedEx or poll for status.
+
 ## Manual sales tax and reporting
 
 The active checkout sales-tax rule set is the business-approved **Avg Combined Reference %** column from the PDF export titled `Compadres_Cigars_50_State_Tobacco_Tax_Matrix_2026.xlsx`. The source file hash is `802f4b18906fe7e6a25c179885ad7fb2b7a536951ab1a9d17b98bdfa249e36b3`. It contains 50 state rows and no District of Columbia rule. Application activation is effective from the explicit business approval date, 2026-08-19; the document title's `2026` label is retained as source-period metadata and is not treated as evidence of a January 1 effective date.
