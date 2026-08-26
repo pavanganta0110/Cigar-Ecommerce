@@ -68,3 +68,271 @@ body.login .button-primary:focus {
 	border-color: #a96831;
 	background: #a96831;
 }
+
+/* ==========================================================================
+   Admin area reskin
+   Applies the storefront's brand palette (ink/brass/parchment/cream, see
+   wp-content/themes/compadres/theme.json) to the wp-admin chrome that
+   AdminBranding.php cannot reach through PHP filters alone: the admin bar,
+   sidebar menu, page backgrounds, headings, buttons, links, and tables.
+   Scoped to body.wp-admin so the public storefront is never affected.
+   ========================================================================== */
+
+body.wp-admin {
+	--compadres-ink: #17120f;
+	--compadres-ink-raised: #241d17;
+	--compadres-ink-line: #3a2f27;
+	--compadres-brass: #d6ad68;
+	--compadres-brass-strong: #b9924f;
+	--compadres-parchment: #f3eadc;
+	--compadres-cream: #fbf7f0;
+	--compadres-text-on-ink: #f3eadc;
+	--compadres-text-muted-on-ink: #c9b8a1;
+
+	background: var(--compadres-parchment);
+}
+
+/* Admin bar */
+#wpadminbar {
+	background: var(--compadres-ink) !important;
+}
+
+#wpadminbar .ab-item,
+#wpadminbar a.ab-item,
+#wpadminbar > #wp-toolbar span.ab-label,
+#wpadminbar > #wp-toolbar span.noticon {
+	color: var(--compadres-text-on-ink) !important;
+}
+
+#wpadminbar .ab-top-menu > li:hover > .ab-item,
+#wpadminbar .ab-top-menu > li > .ab-item:focus,
+#wpadminbar.nojq .quicklinks .ab-top-menu > li:hover > .ab-item {
+	color: var(--compadres-brass) !important;
+	background: var(--compadres-ink-raised) !important;
+}
+
+#wpadminbar .ab-submenu {
+	background: var(--compadres-ink-raised) !important;
+}
+
+#wpadminbar .ab-submenu .ab-item {
+	color: var(--compadres-text-muted-on-ink) !important;
+}
+
+#wpadminbar .ab-submenu .ab-item:hover,
+#wpadminbar .ab-submenu .ab-item:focus {
+	color: var(--compadres-brass) !important;
+	background: var(--compadres-ink) !important;
+}
+
+/* Sidebar menu */
+#adminmenuback,
+#adminmenuwrap,
+#adminmenu,
+#adminmenu .wp-submenu,
+#adminmenu li.wp-has-current-submenu .wp-submenu,
+.folded #adminmenu .wp-submenu {
+	background: var(--compadres-ink) !important;
+}
+
+#adminmenuwrap {
+	border-top: 3px solid var(--compadres-brass);
+}
+
+#adminmenu a {
+	color: var(--compadres-text-on-ink);
+}
+
+#adminmenu div.wp-menu-image::before {
+	color: var(--compadres-text-muted-on-ink);
+}
+
+#adminmenu li.menu-top:hover,
+#adminmenu li.opensub > a.menu-top,
+#adminmenu li > a.menu-top:focus {
+	background: var(--compadres-ink-raised) !important;
+}
+
+#adminmenu li.menu-top:hover div.wp-menu-image::before,
+#adminmenu li.opensub > a.menu-top div.wp-menu-image::before {
+	color: var(--compadres-brass);
+}
+
+#adminmenu li.wp-has-current-submenu a.wp-has-current-submenu,
+#adminmenu li.current a.menu-top {
+	background: var(--compadres-ink-raised) !important;
+	color: var(--compadres-brass) !important;
+	box-shadow: inset 4px 0 0 var(--compadres-brass);
+}
+
+#adminmenu li.wp-has-current-submenu a.wp-has-current-submenu div.wp-menu-image::before,
+#adminmenu li.current a.menu-top div.wp-menu-image::before {
+	color: var(--compadres-brass) !important;
+}
+
+#adminmenu li.wp-has-current-submenu div.wp-menu-arrow,
+#adminmenu li.wp-has-current-submenu div.wp-menu-arrow div,
+#adminmenu li.current div.wp-menu-arrow,
+#adminmenu li.current div.wp-menu-arrow div {
+	background: var(--compadres-parchment) !important;
+}
+
+#adminmenu .wp-submenu a,
+#adminmenu .wp-submenu-head {
+	color: var(--compadres-text-muted-on-ink) !important;
+}
+
+#adminmenu a:hover,
+#adminmenu a:focus,
+#adminmenu .wp-submenu a:hover,
+#adminmenu .wp-submenu a:focus,
+#adminmenu li.wp-has-current-submenu .wp-submenu a.wp-has-current-submenu,
+#adminmenu .wp-submenu li.current a,
+#adminmenu .wp-submenu li a.current {
+	color: var(--compadres-brass) !important;
+}
+
+#adminmenu li.wp-menu-separator {
+	background: var(--compadres-ink-line);
+}
+
+#adminmenu .awaiting-mod,
+#adminmenu .update-plugins {
+	background: var(--compadres-brass);
+	color: var(--compadres-ink);
+}
+
+#collapse-button .collapse-button-icon {
+	color: var(--compadres-text-muted-on-ink);
+}
+
+#collapse-menu:hover .collapse-button-icon {
+	color: var(--compadres-brass);
+}
+
+/* Page chrome */
+#wpbody-content .wrap h1.wp-heading-inline,
+#wpbody-content .wrap > h1,
+#wpbody-content .wrap > h2:first-child {
+	color: var(--compadres-ink);
+	font-family: Georgia, "Times New Roman", serif;
+}
+
+#wpbody-content a {
+	color: var(--compadres-brass-strong);
+}
+
+#wpbody-content a:hover,
+#wpbody-content a:focus {
+	color: var(--compadres-ink);
+}
+
+.wrap .page-title-action {
+	border-color: var(--compadres-brass-strong);
+	color: var(--compadres-brass-strong);
+}
+
+.wrap .page-title-action:hover {
+	border-color: var(--compadres-ink);
+	color: var(--compadres-ink);
+}
+
+/* Buttons */
+.wp-core-ui .button-primary {
+	border-color: var(--compadres-brass-strong);
+	background: var(--compadres-brass);
+	color: var(--compadres-ink);
+	text-shadow: none;
+	box-shadow: none;
+}
+
+.wp-core-ui .button-primary:hover,
+.wp-core-ui .button-primary:focus {
+	border-color: var(--compadres-ink);
+	background: var(--compadres-brass-strong);
+	color: var(--compadres-ink);
+}
+
+.wp-core-ui .button-primary:focus {
+	box-shadow: 0 0 0 1px var(--compadres-cream), 0 0 0 3px var(--compadres-brass-strong);
+}
+
+.wp-core-ui .button,
+.wp-core-ui .button-secondary {
+	border-color: var(--compadres-ink-line);
+	background: var(--compadres-cream);
+	color: var(--compadres-ink);
+}
+
+.wp-core-ui .button:hover,
+.wp-core-ui .button-secondary:hover {
+	border-color: var(--compadres-brass-strong);
+	color: var(--compadres-brass-strong);
+}
+
+/* Form fields */
+.wp-core-ui input[type="text"]:focus,
+.wp-core-ui input[type="search"]:focus,
+.wp-core-ui input[type="email"]:focus,
+.wp-core-ui input[type="password"]:focus,
+.wp-core-ui input[type="number"]:focus,
+.wp-core-ui input[type="date"]:focus,
+.wp-core-ui select:focus,
+.wp-core-ui textarea:focus {
+	border-color: var(--compadres-brass-strong);
+	box-shadow: 0 0 0 1px var(--compadres-brass-strong);
+}
+
+.wp-core-ui input[type="checkbox"]:checked::before,
+.wp-core-ui input[type="radio"]:checked::before {
+	color: var(--compadres-brass-strong);
+}
+
+.wp-core-ui input[type="checkbox"]:focus,
+.wp-core-ui input[type="radio"]:focus {
+	border-color: var(--compadres-brass-strong);
+	box-shadow: 0 0 0 1px var(--compadres-brass-strong);
+}
+
+/* Tables */
+.wp-list-table thead th,
+.wp-list-table thead td,
+.wp-list-table tfoot th,
+.wp-list-table tfoot td,
+table.widefat thead th,
+table.widefat tfoot th {
+	border-bottom-color: var(--compadres-ink-line);
+}
+
+.wp-list-table tbody tr:nth-child(odd),
+table.widefat.striped > tbody > :nth-child(odd),
+.striped > tbody > :nth-child(odd) {
+	background: var(--compadres-cream);
+}
+
+.wp-list-table tbody tr,
+table.widefat tbody tr {
+	background: #fff;
+}
+
+.wrap table.widefat,
+.postbox,
+.form-table {
+	border-color: var(--compadres-ink-line);
+	box-shadow: 0 1px 3px rgb(23 18 15 / 8%);
+}
+
+.postbox .postbox-header,
+.postbox h2.hndle,
+.stuffbox h3 {
+	border-bottom-color: var(--compadres-ink-line);
+	background: var(--compadres-cream);
+	color: var(--compadres-ink);
+}
+
+/* Notices: keep semantic colors (error/success/warning) for usability;
+   only the neutral/info accent is rebranded. */
+.notice-info,
+.notice.notice-info {
+	border-left-color: var(--compadres-brass-strong);
+}
