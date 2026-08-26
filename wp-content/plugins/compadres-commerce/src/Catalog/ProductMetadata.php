@@ -68,7 +68,7 @@ final class ProductMetadata {
 			),
 			'sales_tax_classification'  => array(
 				'label' => 'Sales-tax classification',
-				'type'  => 'text',
+				'type'  => 'select',
 			),
 			'excise_tax_classification' => array(
 				'label' => 'Excise-tax classification',
@@ -147,14 +147,19 @@ final class ProductMetadata {
 				'label' => $definition['label'],
 			);
 			if ( 'select' === $definition['type'] ) {
-				$args['options'] = array(
-					''            => __( 'Not specified', 'compadres-commerce' ),
-					'mild'        => __( 'Mild', 'compadres-commerce' ),
-					'mild-medium' => __( 'Mild–Medium', 'compadres-commerce' ),
-					'medium'      => __( 'Medium', 'compadres-commerce' ),
-					'medium-full' => __( 'Medium–Full', 'compadres-commerce' ),
-					'full'        => __( 'Full', 'compadres-commerce' ),
-				);
+				$args['options'] = 'sales_tax_classification' === $field
+					? array(
+						''      => __( 'Not subject to the Compadres cigar sales-tax rules', 'compadres-commerce' ),
+						'cigar' => __( 'Cigar — manual destination-state sales tax', 'compadres-commerce' ),
+					)
+					: array(
+						''            => __( 'Not specified', 'compadres-commerce' ),
+						'mild'        => __( 'Mild', 'compadres-commerce' ),
+						'mild-medium' => __( 'Mild–Medium', 'compadres-commerce' ),
+						'medium'      => __( 'Medium', 'compadres-commerce' ),
+						'medium-full' => __( 'Medium–Full', 'compadres-commerce' ),
+						'full'        => __( 'Full', 'compadres-commerce' ),
+					);
 				woocommerce_wp_select( $args );
 			} elseif ( 'textarea' === $definition['type'] ) {
 				woocommerce_wp_textarea_input( $args );

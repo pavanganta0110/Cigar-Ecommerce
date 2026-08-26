@@ -328,7 +328,8 @@ test('destination product restriction clears after the restricted item is remove
   const row = page.locator('.wc-block-cart-items__row').filter({ hasText: 'Fictional Robusto' });
   await row.getByRole('button', { name: /remove/i }).click();
   await expect(row).toHaveCount(0);
-  await expect(page.getByText('Estimated total').locator('..')).toContainText('$10.00');
+  const remainingRow = page.locator('.wc-block-cart-items__row').filter({ hasText: 'Fictional Toro Single' });
+  await expect(remainingRow).toContainText('$10.00');
   await page.goto('/checkout/');
   await fillCheckout(page, 'MO', '63101');
   await submitCheckout(page);

@@ -22,7 +22,9 @@ final class ShippingContext {
 		private string $state,
 		private string $postal_code,
 		private string $selected_service_id,
-		private array $product_ids
+		private array $product_ids,
+		private float $weight = 0.0,
+		private string $weight_unit = 'LB'
 	) {
 	}
 
@@ -45,6 +47,14 @@ final class ShippingContext {
 	/** @return list<int> */
 	public function productIds(): array {
 		return $this->product_ids;
+	}
+
+	public function weight(): float {
+		return $this->weight;
+	}
+
+	public function weightUnit(): string {
+		return $this->weight_unit;
 	}
 
 	public function hasDestination(): bool {

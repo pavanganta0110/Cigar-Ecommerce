@@ -32,6 +32,11 @@ final class ProductData {
 		foreach ( self::TEXT_FIELDS as $field ) {
 			$output[ $field ] = self::text( $input[ $field ] ?? '' );
 		}
+		$sales_tax_classification = strtolower( $output['sales_tax_classification'] );
+		if ( ! in_array( $sales_tax_classification, array( '', 'cigar' ), true ) ) {
+			throw new InvalidArgumentException( 'Sales-tax classification is not recognized.' );
+		}
+		$output['sales_tax_classification'] = $sales_tax_classification;
 
 		$upc = trim( (string) ( $input['upc'] ?? '' ) );
 		if ( '' !== $upc && ! preg_match( '/^[0-9]{8,14}$/', $upc ) ) {

@@ -132,7 +132,7 @@ final class FixtureCommand {
 				'box_quantity'              => $data[8],
 				'country_of_origin'         => 'Fictional development origin',
 				'flavor_profile'            => 'Fictional development profile',
-				'sales_tax_classification'  => 'development-only',
+				'sales_tax_classification'  => 'cigar',
 				'excise_tax_classification' => 'development-only',
 			)
 		);
