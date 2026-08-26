@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Compadres\Commerce;
 
+use Compadres\Commerce\Admin\AdminBranding;
 use Compadres\Commerce\AgeVerification\AgeVerificationAdmin;
 use Compadres\Commerce\AgeVerification\CheckoutIntegration;
 use Compadres\Commerce\Audit\AuditAdmin;
@@ -16,14 +17,18 @@ use Compadres\Commerce\Catalog\ProductMetadata;
 use Compadres\Commerce\Checkout\CheckoutOrchestrator;
 use Compadres\Commerce\Compliance\AgeGate;
 use Compadres\Commerce\Infrastructure\Environment;
+use Compadres\Commerce\Reporting\SalesTaxAdmin;
 use Compadres\Commerce\Restrictions\CheckoutRestrictionIntegration;
 use Compadres\Commerce\Restrictions\RestrictionAdmin;
 use Compadres\Commerce\Restrictions\RestrictionFixtureCommand;
 use Compadres\Commerce\Restrictions\RestrictionMigration;
 use Compadres\Commerce\Security\RoleManager;
 use Compadres\Commerce\Shipping\CheckoutShippingIntegration;
+use Compadres\Commerce\Shipping\FedExShippingMethod;
 use Compadres\Commerce\Shipping\MockShippingMethod;
 use Compadres\Commerce\Shipping\ShippingAdmin;
+use Compadres\Commerce\Tax\ManualSalesTaxInstaller;
+use Compadres\Commerce\Tax\ManualSalesTaxIntegration;
 
 final class Plugin {
 	public const VERSION        = '0.1.0';
@@ -52,7 +57,9 @@ final class Plugin {
 		add_action( 'before_woocommerce_init', array( $this, 'declareHposCompatibility' ) );
 		add_action( 'init', array( AuditMigration::class, 'maybeInstall' ), 1 );
 		add_action( 'init', array( RestrictionMigration::class, 'maybeInstall' ), 2 );
+		add_action( 'init', array( ManualSalesTaxInstaller::class, 'maybeInstall' ), 3 );
 		add_action( 'init', array( $this, 'ensureRoles' ), 5 );
+		( new AdminBranding() )->registerHooks();
 		( new AuditAdmin() )->registerHooks();
 		( new BrandTaxonomy() )->registerHooks();
 		( new ProductMetadata() )->registerHooks();
@@ -62,6 +69,8 @@ final class Plugin {
 		( new CheckoutIntegration() )->registerHooks();
 		( new CheckoutRestrictionIntegration() )->registerHooks();
 		( new RestrictionAdmin() )->registerHooks();
+		( new SalesTaxAdmin() )->registerHooks();
+		( new ManualSalesTaxIntegration() )->registerHooks();
 		( new AgeVerificationAdmin() )->registerHooks();
 		( new ShippingAdmin() )->register();
 		( new CheckoutShippingIntegration() )->register();
@@ -103,15 +112,15 @@ final class Plugin {
 	}
 
 	/**
-	 * Register the development-only mock shipping method. It is automatically
-	 * unavailable in production and only available in explicitly enabled
-	 * staging; see WordPressShippingRuntime::mockMethodAllowed().
+	 * Register the available shipping adapters. Each method performs its own
+	 * environment and configuration gate before exposing any rates.
 	 *
 	 * @param array<string, class-string> $methods
 	 * @return array<string, class-string>
 	 */
 	public function registerShippingMethods( array $methods ): array {
-		$methods[ MockShippingMethod::METHOD_ID ] = MockShippingMethod::class;
+		$methods[ MockShippingMethod::METHOD_ID ]  = MockShippingMethod::class;
+		$methods[ FedExShippingMethod::METHOD_ID ] = FedExShippingMethod::class;
 		return $methods;
 	}
 }

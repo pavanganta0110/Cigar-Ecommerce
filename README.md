@@ -25,10 +25,23 @@ docker compose up -d --build
 Open:
 
 - Store: <http://localhost:8080>
-- WordPress admin: <http://localhost:8080/wp-admin/>
+- Compadres Cigars Admin Portal: <http://localhost:8080/wp-admin/>
+- Sales & Tax Dashboard: <http://localhost:8080/wp-admin/admin.php?page=compadres-sales-tax>
 - Mailpit: <http://localhost:8025>
 
 The bootstrap script installs WordPress, installs WooCommerce 10.9.4, activates the Compadres theme and Compadres Commerce plugin, creates WooCommerce pages, and configures local account/checkout defaults. It also loads the idempotent fictional catalog fixtures in local/development environments. It refuses to run when `APP_ENV=production`.
+
+## Staff portal and reporting
+
+The staff experience is branded as the **Compadres Cigars Admin Portal**. The login screen, browser title, toolbar, and footer do not expose WordPress branding. Reporting access is capability-based through `compadres_view_tax_reports`; hiding navigation is not the security boundary.
+
+The private **Sales & Tax Dashboard** reports finalized processing/completed orders and recorded refunds without displaying customer names, emails, addresses, payment data, or age-verification payloads. It includes date/state/product filters, state tax collected, product/SKU quantities and revenue, refunds, current stock, and a nonce-protected formula-safe CSV export. Reported tax is tax collected under the configured rules and is not represented as a filed or legally reconciled liability.
+
+## Manual sales-tax rules
+
+Checkout uses the business-approved `Avg Combined Reference %` column from `Compadres_Cigars_50_State_Tobacco_Tax_Matrix_2026.xlsx - 50-State Tax Matrix.pdf`, effective for application use beginning **2026-08-19**. The rule set contains one explicit rate for each of the 50 states, including explicit zero rates. The source attachment remains outside source control.
+
+These values are statewide average references, not exact city/county destination rates. This limitation is shown in the staff dashboard. Shipping is not taxed by this rule set because the source does not provide shipping-taxability instructions. Tobacco/cigar excise taxes are separate and are not calculated from these sales-tax rates. Each order stores the applied state, rate, amount, calculation basis, effective date, source column/document/hash, rule version, and average-reference designation so later rate changes do not rewrite historical orders.
 
 ## Common commands
 

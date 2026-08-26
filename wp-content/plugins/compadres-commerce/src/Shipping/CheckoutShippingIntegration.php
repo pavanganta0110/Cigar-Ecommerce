@@ -93,13 +93,7 @@ final class CheckoutShippingIntegration {
 	 */
 	public function persist( \WC_Order $order ): void {
 		$selected = $this->resolveSelectedServiceId();
-		$context  = new ShippingContext(
-			(string) $order->get_shipping_country(),
-			(string) $order->get_shipping_state(),
-			(string) $order->get_shipping_postcode(),
-			$selected,
-			$this->orderProductIds( $order )
-		);
+		$context  = $this->orderContext( $order, $selected );
 		$provider = $this->runtime->provider();
 		$result   = $this->policy->evaluate( $context, $provider );
 
@@ -140,13 +134,7 @@ final class CheckoutShippingIntegration {
 			throw new Exception( esc_html( $result->customerMessage() ) );
 		}
 
-		$context = new ShippingContext(
-			(string) $order->get_shipping_country(),
-			(string) $order->get_shipping_state(),
-			(string) $order->get_shipping_postcode(),
-			$selected,
-			$this->orderProductIds( $order )
-		);
+		$context = $this->orderContext( $order, $selected );
 		$result  = $this->policy->evaluate( $context, $this->runtime->provider() );
 		if ( ! $result->eligible() ) {
 			$this->auditBlock( $result, 'order_payment' );
@@ -178,14 +166,57 @@ final class CheckoutShippingIntegration {
 	 */
 	private function evaluate( array $data ): ShippingEligibilityResult {
 		$selected = $this->resolveSelectedServiceId( $data );
-		$context  = new ShippingContext(
+		$context  = $this->checkoutContext( $data, $selected );
+		return $this->policy->evaluate( $context, $this->runtime->provider() );
+	}
+
+	/** @param array<string, mixed> $data */
+	private function checkoutContext( array $data, string $selected ): ShippingContext {
+		$packages = WC()->shipping()->get_packages();
+		if ( 1 === count( $packages ) ) {
+			$package = reset( $packages );
+			if ( is_array( $package ) ) {
+				return FedExPackageContextFactory::fromPackage(
+					$package,
+					(string) get_option( 'woocommerce_weight_unit', 'lbs' ),
+					$selected
+				);
+			}
+		}
+		return new ShippingContext(
 			(string) ( $data['shipping_country'] ?? $data['billing_country'] ?? '' ),
 			(string) ( $data['shipping_state'] ?? $data['billing_state'] ?? '' ),
 			(string) ( $data['shipping_postcode'] ?? $data['billing_postcode'] ?? '' ),
 			$selected,
 			$this->cartProductIds()
 		);
-		return $this->policy->evaluate( $context, $this->runtime->provider() );
+	}
+
+	private function orderContext( \WC_Order $order, string $selected ): ShippingContext {
+		$contents = array();
+		foreach ( $order->get_items() as $item ) {
+			if ( ! $item instanceof \WC_Order_Item_Product ) {
+				continue;
+			}
+			$contents[] = array(
+				'product_id'   => (int) $item->get_product_id(),
+				'variation_id' => (int) $item->get_variation_id(),
+				'quantity'     => (float) $item->get_quantity(),
+				'data'         => $item->get_product(),
+			);
+		}
+		return FedExPackageContextFactory::fromPackage(
+			array(
+				'destination' => array(
+					'country'  => (string) $order->get_shipping_country(),
+					'state'    => (string) $order->get_shipping_state(),
+					'postcode' => (string) $order->get_shipping_postcode(),
+				),
+				'contents'    => $contents,
+			),
+			(string) get_option( 'woocommerce_weight_unit', 'lbs' ),
+			$selected
+		);
 	}
 
 	/**
@@ -226,10 +257,11 @@ final class CheckoutShippingIntegration {
 
 	/** Extract a bounded service identifier from method:instance:service. */
 	private function serviceIdFromRate( string $rate_id ): string {
-		$parts = explode( ':', $rate_id );
+		$parts           = explode( ':', $rate_id );
+		$allowed_methods = array( MockShippingMethod::METHOD_ID, FedExShippingMethod::METHOD_ID );
 		if (
 			3 !== count( $parts )
-			|| MockShippingMethod::METHOD_ID !== $parts[0]
+			|| ! in_array( $parts[0], $allowed_methods, true )
 			|| 1 !== preg_match( '/^[0-9]+$/', $parts[1] )
 			|| 1 !== preg_match( '/^[a-z0-9_]{1,64}$/', $parts[2] )
 		) {
@@ -301,18 +333,6 @@ final class CheckoutShippingIntegration {
 		return array_values( array_unique( array_filter( $ids, static fn ( int $id ): bool => $id > 0 ) ) );
 	}
 
-	/** @return list<int> */
-	private function orderProductIds( \WC_Order $order ): array {
-		$ids = array();
-		foreach ( $order->get_items() as $item ) {
-			if ( ! $item instanceof \WC_Order_Item_Product ) {
-				continue;
-			}
-			$ids[] = (int) $item->get_product_id();
-			$ids[] = (int) $item->get_variation_id();
-		}
-		return array_values( array_unique( array_filter( $ids, static fn ( int $id ): bool => $id > 0 ) ) );
-	}
 
 	private function auditBlock( ShippingEligibilityResult $result, string $phase ): void {
 		AuditServiceFactory::create()->failure(
