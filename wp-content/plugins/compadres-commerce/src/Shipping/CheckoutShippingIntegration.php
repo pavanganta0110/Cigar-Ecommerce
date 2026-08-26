@@ -96,6 +96,10 @@ final class CheckoutShippingIntegration {
 		$context  = $this->orderContext( $order, $selected );
 		$provider = $this->runtime->provider();
 		$result   = $this->policy->evaluate( $context, $provider );
+		$snapshot = ShippingPackageSnapshot::fromContext( $context );
+		if ( $result->eligible() && null === $snapshot ) {
+			$result = $this->invalidOrderSnapshotResult();
+		}
 
 		$order->update_meta_data( OrderShippingMeta::ADULT_SIGNATURE_REQUIRED, $result->requiresAdultSignature() ? 'yes' : 'no' );
 		$order->update_meta_data( OrderShippingMeta::PROVIDER, $result->auditContext()['provider'] );
@@ -113,6 +117,9 @@ final class CheckoutShippingIntegration {
 			$result->eligible() ? OrderShippingMeta::ELIGIBILITY_ALLOWED : OrderShippingMeta::ELIGIBILITY_BLOCKED
 		);
 		$order->update_meta_data( OrderShippingMeta::ELIGIBILITY_CHECKED_AT, ( $this->clock )()->format( 'c' ) );
+		if ( null !== $snapshot ) {
+			$order->update_meta_data( OrderShippingMeta::PACKAGE_SNAPSHOT, $snapshot->toJson() );
+		}
 
 		if ( ! $result->eligible() ) {
 			$this->auditBlock( $result, 'pre_order' );
@@ -134,7 +141,18 @@ final class CheckoutShippingIntegration {
 			throw new Exception( esc_html( $result->customerMessage() ) );
 		}
 
-		$context = $this->orderContext( $order, $selected );
+		$snapshot = ShippingPackageSnapshot::fromJson( (string) $order->get_meta( OrderShippingMeta::PACKAGE_SNAPSHOT ) );
+		if ( null === $snapshot ) {
+			$result = $this->invalidOrderSnapshotResult();
+			$this->auditBlock( $result, 'order_payment' );
+			throw new Exception( esc_html( $result->customerMessage() ) );
+		}
+		$context = $snapshot->context(
+			(string) $order->get_shipping_country(),
+			(string) $order->get_shipping_state(),
+			(string) $order->get_shipping_postcode(),
+			$selected
+		);
 		$result  = $this->policy->evaluate( $context, $this->runtime->provider() );
 		if ( ! $result->eligible() ) {
 			$this->auditBlock( $result, 'order_payment' );

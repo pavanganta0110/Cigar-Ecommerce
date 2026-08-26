@@ -15,10 +15,14 @@ use Compadres\Commerce\Infrastructure\Environment;
  */
 final class WordPressShippingRuntime {
 
+	private static ?ShippingMethodProvider $request_provider = null;
+
 	private Environment $environment;
 	private FedExConfiguration $fedex_configuration;
 	private FedExTransport $fedex_transport;
 	private string $provider_name;
+	private ?ShippingMethodProvider $resolved_provider = null;
+	private bool $use_request_provider;
 
 	public function __construct(
 		?Environment $environment = null,
@@ -26,11 +30,15 @@ final class WordPressShippingRuntime {
 		?FedExTransport $fedex_transport = null,
 		?string $provider_name = null
 	) {
-		$this->environment         = $environment ?? Environment::fromString( (string) getenv( 'APP_ENV' ) );
-		$this->fedex_configuration = $fedex_configuration ?? FedExConfiguration::fromEnvironment( $this->environment );
-		$this->fedex_transport     = $fedex_transport ?? new WordPressFedExTransport();
-		$selected                  = strtolower( trim( $provider_name ?? (string) getenv( 'COMPADRES_SHIPPING_PROVIDER' ) ) );
-		$this->provider_name       = '' !== $selected
+		$this->use_request_provider = null === $environment
+			&& null === $fedex_configuration
+			&& null === $fedex_transport
+			&& null === $provider_name;
+		$this->environment          = $environment ?? Environment::fromString( (string) getenv( 'APP_ENV' ) );
+		$this->fedex_configuration  = $fedex_configuration ?? FedExConfiguration::fromEnvironment( $this->environment );
+		$this->fedex_transport      = $fedex_transport ?? new WordPressFedExTransport();
+		$selected                   = strtolower( trim( $provider_name ?? (string) getenv( 'COMPADRES_SHIPPING_PROVIDER' ) ) );
+		$this->provider_name        = '' !== $selected
 			? $selected
 			: ( $this->environment->allowsDevelopmentProviders() ? 'mock' : 'none' );
 	}
@@ -40,16 +48,29 @@ final class WordPressShippingRuntime {
 	}
 
 	public function provider(): ShippingMethodProvider {
+		if ( null !== $this->resolved_provider ) {
+			return $this->resolved_provider;
+		}
 		if ( 'fedex' === $this->provider_name ) {
-			return new FedExShippingProvider(
+			if ( $this->use_request_provider && self::$request_provider instanceof FedExShippingProvider ) {
+				$this->resolved_provider = self::$request_provider;
+				return $this->resolved_provider;
+			}
+			$this->resolved_provider = new FedExShippingProvider(
 				$this->fedex_configuration,
 				new FedExApiClient( $this->fedex_configuration, $this->fedex_transport )
 			);
+			if ( $this->use_request_provider ) {
+				self::$request_provider = $this->resolved_provider;
+			}
+			return $this->resolved_provider;
 		}
 		if ( $this->mockMethodAllowed() ) {
-			return new MockShippingProvider( ShippingSettings::scenario() );
+			$this->resolved_provider = new MockShippingProvider( ShippingSettings::scenario() );
+			return $this->resolved_provider;
 		}
-		return new NoShippingProvider();
+		$this->resolved_provider = new NoShippingProvider();
+		return $this->resolved_provider;
 	}
 
 	public function fedExMethodAllowed(): bool {

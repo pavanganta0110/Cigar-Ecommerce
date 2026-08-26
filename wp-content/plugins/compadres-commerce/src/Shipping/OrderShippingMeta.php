@@ -18,6 +18,7 @@ final class OrderShippingMeta {
 	public const SERVICE_REFERENCE        = '_compadres_shipping_service_reference';
 	public const ELIGIBILITY              = '_compadres_shipping_eligibility';
 	public const ELIGIBILITY_CHECKED_AT   = '_compadres_shipping_eligibility_checked_at';
+	public const PACKAGE_SNAPSHOT         = '_compadres_shipping_package_snapshot';
 
 	public const ELIGIBILITY_ALLOWED = 'allowed';
 	public const ELIGIBILITY_BLOCKED = 'blocked';

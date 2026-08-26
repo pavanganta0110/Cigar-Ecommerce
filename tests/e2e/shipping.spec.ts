@@ -316,6 +316,7 @@ test('eligible test service permits checkout and stores only minimal shipping me
       '_compadres_shipping_adult_signature_required',
       '_compadres_shipping_eligibility',
       '_compadres_shipping_eligibility_checked_at',
+      '_compadres_shipping_package_snapshot',
       '_compadres_shipping_provider',
       '_compadres_shipping_service',
       '_compadres_shipping_service_reference',
@@ -326,6 +327,11 @@ test('eligible test service permits checkout and stores only minimal shipping me
   expect(metadata._compadres_shipping_service).toBe('compadres_mock_eligible');
   expect(metadata._compadres_shipping_service_reference).toBe('mock-compadres_mock_eligible');
   expect(metadata._compadres_shipping_eligibility).toBe('allowed');
+  expect(JSON.parse(metadata._compadres_shipping_package_snapshot)).toEqual({
+    product_ids: [Number(productId)],
+    weight: 0,
+    weight_unit: 'LB',
+  });
   expect(Number.isNaN(Date.parse(metadata._compadres_shipping_eligibility_checked_at))).toBeFalsy();
 
   await login(page, 'shipping-store-admin');
@@ -416,6 +422,11 @@ test('pay-for-order hook validates immutable shipping snapshots and fails closed
     _compadres_shipping_service: 'compadres_mock_eligible',
     _compadres_shipping_eligibility: 'allowed',
     _compadres_shipping_eligibility_checked_at: new Date().toISOString().replace(/\.\d{3}Z$/, '+00:00'),
+    _compadres_shipping_package_snapshot: JSON.stringify({
+      product_ids: [Number(productId)],
+      weight: 0,
+      weight_unit: 'LB',
+    }),
   };
   const outcome = (snapshot: Record<string, string>): string => {
     const encoded = Buffer.from(JSON.stringify(snapshot)).toString('base64');
@@ -435,6 +446,9 @@ test('pay-for-order hook validates immutable shipping snapshots and fails closed
   ).toBe('blocked');
   expect(outcome({ ...completeSnapshot, _compadres_shipping_provider: 'forged-provider' })).toBe('blocked');
   expect(outcome(completeSnapshot)).toBe('allowed');
+  wpCli(['eval', `$p=wc_get_product(${productId});$p->set_weight('9.5');$p->save();`]);
+  expect(outcome(completeSnapshot)).toBe('allowed');
+  wpCli(['eval', `$p=wc_get_product(${productId});$p->set_weight('');$p->save();`]);
 
   setScenario('ineligible');
   expect(outcome(completeSnapshot)).toBe('blocked');

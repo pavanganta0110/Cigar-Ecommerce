@@ -6,6 +6,7 @@ namespace Compadres\Commerce\Shipping;
 
 /** FedEx HTTP transport using the WordPress HTTP API. */
 final class WordPressFedExTransport implements FedExTransport {
+	private const MAX_RESPONSE_BYTES = 1048576;
 
 	/**
 	 * @param array<string, string> $headers
@@ -15,12 +16,13 @@ final class WordPressFedExTransport implements FedExTransport {
 		$response = wp_remote_post(
 			$url,
 			array(
-				'body'               => $body,
-				'headers'            => $headers,
-				'redirection'        => 0,
-				'reject_unsafe_urls' => true,
-				'sslverify'          => true,
-				'timeout'            => 15,
+				'body'                => $body,
+				'headers'             => $headers,
+				'redirection'         => 0,
+				'reject_unsafe_urls'  => true,
+				'sslverify'           => true,
+				'timeout'             => 15,
+				'limit_response_size' => self::MAX_RESPONSE_BYTES + 1,
 			)
 		);
 		if ( is_wp_error( $response ) ) {
