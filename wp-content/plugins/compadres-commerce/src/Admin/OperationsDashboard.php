@@ -8,7 +8,9 @@ use Compadres\Commerce\AgeVerification\AgeVerificationSettings;
 use Compadres\Commerce\AgeVerification\ProviderConfiguration;
 use Compadres\Commerce\AgeVerification\VerificationStatus;
 use Compadres\Commerce\AgeVerification\WordPressAgeVerificationRuntime;
+use Compadres\Commerce\Infrastructure\Environment;
 use Compadres\Commerce\Integrations\IntegrationStatus;
+use Compadres\Commerce\Payments\GlobalPaymentsConfiguration;
 use Compadres\Commerce\Shipping\OrderShippingMeta;
 use Compadres\Commerce\Shipping\OrderTracking;
 use Compadres\Commerce\Shipping\WordPressShippingRuntime;
@@ -19,8 +21,8 @@ use WC_Order;
  * staff attention, so nobody has to already know which settings screen or
  * order-list filter to open.
  *
- * Scoped to what is registered today: age verification and shipping. A
- * payment or tax integration added later should add its own health
+ * Scoped to what is registered today: age verification, shipping, and
+ * payments. A tax integration added later should add its own health
  * description and blocked-order query here rather than this page guessing
  * at an interface it does not yet know.
  */
@@ -147,9 +149,11 @@ final class OperationsDashboard {
 	private function integrationStatuses(): array {
 		$age_settings = get_option( WordPressAgeVerificationRuntime::OPTION, AgeVerificationSettings::defaults() );
 		$age_config   = ProviderConfiguration::fromArray( is_array( $age_settings ) ? $age_settings : array() );
+		$environment  = Environment::fromString( (string) getenv( 'APP_ENV' ) );
 		return array(
 			AgeVerificationHealth::describe( $age_config ),
 			ShippingHealth::describe( ( new WordPressShippingRuntime() )->mockMethodAllowed() ),
+			PaymentHealth::describe( GlobalPaymentsConfiguration::fromEnvironment( $environment ) ),
 		);
 	}
 

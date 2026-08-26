@@ -39,6 +39,7 @@ wp_cli option update users_can_register 1
 wp_cli option update default_role customer
 wp_cli rewrite structure '/%postname%/' --hard
 wp_cli plugin install woocommerce --version="${WOOCOMMERCE_VERSION}" --activate
+wp_cli plugin install global-payments-woocommerce --activate
 wp_cli theme activate compadres
 wp_cli plugin activate compadres-commerce
 # Remove WordPress-bundled defaults nobody uses so staff never see them in
