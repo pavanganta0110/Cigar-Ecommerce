@@ -25,6 +25,7 @@ node_modules/
 coverage/
 test-results/
 playwright-report/
+.hermes/desktop-attachments/
 .phpunit.result.cache
 .phpcs-cache
 .phpstan-cache/

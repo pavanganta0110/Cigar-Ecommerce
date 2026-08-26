@@ -328,6 +328,33 @@ test('eligible test service permits checkout and stores only minimal shipping me
   expect(metadata._compadres_shipping_eligibility).toBe('allowed');
   expect(Number.isNaN(Date.parse(metadata._compadres_shipping_eligibility_checked_at))).toBeFalsy();
 
+  const taxSnapshot = JSON.parse(
+    wpCli([
+      'eval',
+      `$o=wc_get_order(${Number(orderId)});echo wp_json_encode(array(` +
+        `'total_tax'=>$o->get_total_tax(),` +
+        `'amount'=>$o->get_meta('_compadres_sales_tax_amount'),` +
+        `'country'=>$o->get_meta('_compadres_sales_tax_country'),` +
+        `'state'=>$o->get_meta('_compadres_sales_tax_rule_state'),` +
+        `'rate'=>$o->get_meta('_compadres_sales_tax_rate_percent'),` +
+        `'basis'=>$o->get_meta('_compadres_sales_tax_calculation_basis'),` +
+        `'source_column'=>$o->get_meta('_compadres_sales_tax_source_column'),` +
+        `'effective_from'=>$o->get_meta('_compadres_sales_tax_effective_from'),` +
+        `'shipping_taxable'=>$o->get_meta('_compadres_sales_tax_shipping_taxable'),` +
+        `'average_reference'=>$o->get_meta('_compadres_sales_tax_is_average_reference')));`,
+    ]),
+  ) as Record<string, string>;
+  expect(Number(taxSnapshot.total_tax)).toBeGreaterThan(0);
+  expect(taxSnapshot.amount).toBe(taxSnapshot.total_tax);
+  expect(taxSnapshot.country).toBe('US');
+  expect(taxSnapshot.state).toBe('MO');
+  expect(taxSnapshot.rate).toBe('8.440');
+  expect(taxSnapshot.basis).toBe('avg_combined_reference');
+  expect(taxSnapshot.source_column).toBe('Avg Combined Reference %');
+  expect(taxSnapshot.effective_from).toBe('2026-08-19');
+  expect(taxSnapshot.shipping_taxable).toBe('no');
+  expect(taxSnapshot.average_reference).toBe('yes');
+
   await login(page, 'shipping-store-admin');
   await page.goto(`/wp-admin/admin.php?page=wc-orders&action=edit&id=${orderId}`);
   const details = page.locator('.compadres-shipping-meta');
@@ -339,6 +366,18 @@ test('eligible test service permits checkout and stores only minimal shipping me
   await expect(details.locator('p')).toHaveCSS('color', 'rgb(80, 87, 94)');
   const adminAxe = await new AxeBuilder({ page }).include('.compadres-shipping-meta').analyze();
   expect(adminAxe.violations).toEqual([]);
+});
+
+test('manual sales tax payment validation rejects missing tax lines and country changes', async ({}, testInfo) => {
+  test.skip(testInfo.project.name.includes('mobile'), 'Server-side tax integrity is covered on desktop.');
+  const result = JSON.parse(
+    wpCli([
+      'eval',
+      `$p=wc_get_product(${productId});$make=function()use($p){$o=wc_create_order();$o->set_shipping_country('US');$o->set_billing_country('US');$o->set_shipping_state('MO');$o->set_billing_state('MO');$o->add_product($p,1);$o->calculate_totals();return $o;};$i=new Compadres\\Commerce\\Tax\\ManualSalesTaxIntegration();$o=$make();$i->snapshotRule($o,array('shipping_country'=>'US','shipping_state'=>'MO'));$i->snapshotAmount($o);$o->set_shipping_country('CA');try{$i->validateOrderPayment($o);$country='allowed';}catch(Throwable $e){$country='blocked';}$o->delete(true);$o=$make();foreach($o->get_items('line_item') as $line){$line->set_taxes(array('total'=>array(),'subtotal'=>array()));$line->save();}foreach($o->get_items('tax') as $tax){$o->remove_item($tax->get_id());}$o->calculate_totals(false);$i->snapshotRule($o,array('shipping_country'=>'US','shipping_state'=>'MO'));try{$i->snapshotAmount($o);$missing='allowed';}catch(Throwable $e){$missing='blocked';}$o->delete(true);$o=$make();foreach($o->get_items('line_item') as $line){$taxes=$line->get_taxes();foreach($taxes['total'] as $id=>$value){$taxes['total'][$id]=0;}$line->set_total(0);$line->set_taxes($taxes);$line->save();}foreach($o->get_items('tax') as $tax){$tax->set_tax_total(0);$tax->save();}$o->set_cart_tax(0);$o->set_shipping_tax(0);$o->save();$i->snapshotRule($o,array('shipping_country'=>'US','shipping_state'=>'MO'));try{$i->snapshotAmount($o);$i->validateOrderPayment($o);$zero='allowed';}catch(Throwable $e){$zero='blocked';}$o->delete(true);echo wp_json_encode(array('country'=>$country,'missing'=>$missing,'zero'=>$zero));`,
+    ]),
+  ) as { country: string; missing: string; zero: string };
+
+  expect(result).toEqual({ country: 'blocked', missing: 'blocked', zero: 'allowed' });
 });
 
 test('service without adult signature is blocked before payment and ignores forged eligibility @a11y', async ({ page }) => {
@@ -423,6 +462,8 @@ test('pay-for-order hook validates immutable shipping snapshots and fails closed
       'eval',
       `$m=json_decode(base64_decode('${encoded}'),true);$o=wc_create_order();$o->add_product(wc_get_product(${productId}),1);` +
         '$o->set_shipping_country("US");$o->set_shipping_state("MO");$o->set_shipping_postcode("63101");$o->set_status("pending");' +
+        '$o->calculate_totals();$t=new Compadres\\Commerce\\Tax\\ManualSalesTaxIntegration();' +
+        '$t->snapshotRule($o,array("shipping_state"=>"MO"));$t->snapshotAmount($o);' +
         'foreach($m as $k=>$v){$o->update_meta_data($k,$v);}$o->save();' +
         'try{do_action("woocommerce_before_pay_action",$o);$r="allowed";}catch(Throwable $e){$r="blocked";}' +
         '$o->delete(true);echo $r;',
