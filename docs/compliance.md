@@ -333,6 +333,16 @@ Integration status is computed independently of each integration's own settings-
 
 "Recent shipments" queries the same 30-day, 50-result window for orders carrying a recorded tracking number (`OrderTracking::META_KEY`), linking each to FedEx's public tracking page exactly as the order edit screen and admin orders-list column do. It reads that same manually recorded value; it does not call FedEx or poll for status.
 
+## Personal data export and erasure
+
+WordPress's built-in personal-data export and erasure tools (Settings → Privacy → Export/Erase Personal Data) already cover the standard order fields through WooCommerce's own exporter and eraser. `PersonalDataExporter` and `PersonalDataEraser` add only what this plugin stores on top of that: age-verification status, restriction/shipping/tax rule outcomes, on the customer's own orders, matched by billing email.
+
+**Export** surfaces every scalar `_compadres_`-prefixed order meta field, with the prefix stripped, as a `compadres_commerce_orders` group in the customer's export file. Date of birth and the order snapshot's own keys are excluded as a defense-in-depth backstop, mirroring the exclusion already applied when the order snapshot itself is built; the collecting module (age verification, which deletes the transient date-of-birth value before order creation) remains the sole authority on what personal data is safe to persist.
+
+**Erasure explicitly does not remove these fields.** They are the tobacco-sale, tax, and age-verification compliance evidence this application exists to produce; deleting them on a generic erasure request would remove the very record a future audit or tax-authority inquiry needs. The eraser reports `items_retained: true` with an explanatory message instead, the same pattern already used for the audit log, which is documented as retained until destroyed "through a separately approved procedure," not through the generic privacy-erasure tool. A real data-retention schedule requires legal and privacy counsel review, which remains an outstanding external input for this project; reporting retention honestly is the correct behavior until that review exists, not a placeholder pending removal.
+
+This module and the order snapshot intentionally use separate, independent meta-filtering logic (`Privacy\OrderComplianceMeta` vs. `Orders\ComplianceMetaFilter`) rather than sharing one implementation: an export for a customer's own request and an internal historical record serve different audiences, and changing what one exposes must not silently change the other.
+
 ## Manual sales tax and reporting
 
 The active checkout sales-tax rule set is the business-approved **Avg Combined Reference %** column from the PDF export titled `Compadres_Cigars_50_State_Tobacco_Tax_Matrix_2026.xlsx`. The source file hash is `802f4b18906fe7e6a25c179885ad7fb2b7a536951ab1a9d17b98bdfa249e36b3`. It contains 50 state rows and no District of Columbia rule. Application activation is effective from the explicit business approval date, 2026-08-19; the document title's `2026` label is retained as source-period metadata and is not treated as evidence of a January 1 effective date.

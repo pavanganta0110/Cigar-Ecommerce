@@ -20,6 +20,8 @@ use Compadres\Commerce\Compliance\AgeGate;
 use Compadres\Commerce\Infrastructure\Environment;
 use Compadres\Commerce\Notifications\EmailBranding;
 use Compadres\Commerce\Orders\OrderSnapshotWriter;
+use Compadres\Commerce\Privacy\PersonalDataEraser;
+use Compadres\Commerce\Privacy\PersonalDataExporter;
 use Compadres\Commerce\Reporting\SalesTaxAdmin;
 use Compadres\Commerce\Restrictions\CheckoutRestrictionIntegration;
 use Compadres\Commerce\Restrictions\RestrictionAdmin;
@@ -78,6 +80,8 @@ final class Plugin {
 		( new SalesTaxAdmin() )->registerHooks();
 		( new ManualSalesTaxIntegration() )->registerHooks();
 		( new AgeVerificationAdmin() )->registerHooks();
+		( new PersonalDataExporter() )->registerHooks();
+		( new PersonalDataEraser() )->registerHooks();
 		( new OrderSnapshotWriter() )->registerHooks();
 		( new ShippingAdmin() )->register();
 		( new OrderTrackingAdmin() )->registerHooks();
