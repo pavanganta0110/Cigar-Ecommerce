@@ -23,6 +23,11 @@ final class ProviderFactory {
 				)
 				: new UnavailableProvider( 'mock_blocked_in_production', $configuration->requiresDateOfBirth(), $now );
 		}
+		if ( 'self_attestation' === $configuration->provider() ) {
+			return $environment->isProduction() && ! $configuration->productionApproved()
+				? new UnavailableProvider( 'provider_not_production_approved', $configuration->requiresDateOfBirth(), $now )
+				: new SelfAttestationProvider( $now );
+		}
 		if ( $environment->isProduction() && ! $configuration->productionApproved() ) {
 			return new UnavailableProvider( 'provider_not_production_approved', $configuration->requiresDateOfBirth(), $now );
 		}

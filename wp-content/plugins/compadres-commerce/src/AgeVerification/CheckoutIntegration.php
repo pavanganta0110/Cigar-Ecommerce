@@ -31,17 +31,29 @@ final class CheckoutIntegration {
 	 */
 	public function checkoutFields( array $fields ): array {
 		$config = $this->runtime->configuration();
-		if ( ! $config->enabled() || ! $config->requiresDateOfBirth() ) {
+		if ( ! $config->enabled() ) {
 			return $fields;
 		}
-		$fields['billing']['compadres_date_of_birth'] = array(
-			'type'         => 'date',
-			'label'        => __( 'Date of birth', 'compadres-commerce' ),
-			'required'     => true,
-			'autocomplete' => 'bday',
-			'priority'     => 35,
-			'description'  => __( 'Used transiently by the configured age-verification provider and not stored by Compadres.', 'compadres-commerce' ),
-		);
+		if ( $config->requiresDateOfBirth() ) {
+			$fields['billing']['compadres_date_of_birth'] = array(
+				'type'         => 'date',
+				'label'        => __( 'Date of birth', 'compadres-commerce' ),
+				'required'     => true,
+				'autocomplete' => 'bday',
+				'priority'     => 35,
+				'description'  => __( 'Used transiently by the configured age-verification provider and not stored by Compadres.', 'compadres-commerce' ),
+			);
+		}
+		$provider = $this->runtime->provider();
+		if ( $provider instanceof AttestationRequirement && $provider->requiresAttestation() ) {
+			$fields['billing']['compadres_age_attestation'] = array(
+				'type'     => 'checkbox',
+				'label'    => __( 'I confirm I am 21 years of age or older.', 'compadres-commerce' ),
+				'required' => true,
+				'priority' => 36,
+				'class'    => array( 'form-row-wide' ),
+			);
+		}
 		return $fields;
 	}
 
@@ -58,7 +70,8 @@ final class CheckoutIntegration {
 			$workflow = new CheckoutWorkflow(
 				new AgeVerificationService( $provider, $store, $now ),
 				new CheckoutGuard( $provider, $now ),
-				$provider instanceof DateOfBirthRequirement && $provider->requiresDateOfBirth()
+				$provider instanceof DateOfBirthRequirement && $provider->requiresDateOfBirth(),
+				$provider instanceof AttestationRequirement && $provider->requiresAttestation()
 			);
 			$decision = $workflow->verify( $data, wc_get_checkout_url() );
 			$result   = $store->current();
@@ -79,7 +92,7 @@ final class CheckoutIntegration {
 				$errors->add( 'compadres_age_verification', wp_kses_post( $message ) );
 			}
 		} catch ( InvalidArgumentException $exception ) {
-			$errors->add( 'compadres_age_verification_dob', esc_html( $exception->getMessage() ) );
+			$errors->add( 'compadres_age_verification_input', esc_html( $exception->getMessage() ) );
 		} catch ( RuntimeException ) {
 			$errors->add( 'compadres_age_verification_unavailable', esc_html__( 'Age verification is unavailable. Checkout cannot continue.', 'compadres-commerce' ) );
 		}

@@ -64,6 +64,14 @@ When testing manually, remove the `compadres_age_confirmed` cookie or use a priv
 
 Checkout age verification is independent from the 21+ site-entry gate. The signed entry cookie records only that a visitor acknowledged the entry notice; checkout never reads it as identity or age evidence. Forged form fields claiming `passed` are likewise ignored. Only the authoritative normalized result held in the WooCommerce session may authorize checkout.
 
+### Self-attestation checkbox option
+
+`SelfAttestationProvider` is a selectable provider (Settings → Checkout Age Verification → Provider) that verifies age with a single required checkbox — "I confirm I am 21 years of age or older" — and nothing else: no date of birth, no identity document, no third-party verification service. Reaching the provider's `verify()` at all already means the checkbox was checked, because `VerificationRequest::fromCheckout()` throws before that point if it was not; the provider does not need to inspect the request, the same design already used by the mock provider.
+
+**This is a materially weaker compliance posture than AgeChecker and is a business/legal decision, not a technical one.** Self-attestation-only age verification for online tobacco sales carries real regulatory exposure — several jurisdictions and enforcement actions have treated checkbox-only attestation as insufficient. Choosing this option is gated the same way AgeChecker is: in production it requires the same "Production approval" checkbox already used for other providers, so it cannot be live without an explicit recorded decision that this approach is acceptable for the applicable jurisdictions. It works without that approval in local/development only.
+
+Every self-attestation pass is still recorded through the same immutable order-verification snapshot as any other provider (provider name `self_attestation`, a freshly generated reference, verification and expiration timestamps), so the record of which orders relied on attestation rather than a stronger check is preserved for later review.
+
 ### Provider boundary and current AgeChecker limitations
 
 Checkout orchestration depends on the replaceable `AgeVerificationProvider` interface. Results are normalized to `passed`, `failed`, `pending`, `manual_review`, `expired`, or `unavailable`. Only an unexpired `passed` result permits checkout. Every other state fails closed before order creation and payment authorization. A valid unexpired pass is reused to avoid unnecessary duplicate provider transactions.

@@ -13,7 +13,7 @@ final class VerificationRequest {
 	private function __construct( private array $providerData ) {}
 
 	/** @param array<string, mixed> $checkout */
-	public static function fromCheckout( array $checkout, bool $date_of_birth_required = false ): self {
+	public static function fromCheckout( array $checkout, bool $date_of_birth_required = false, bool $attestation_required = false ): self {
 		$map  = array(
 			'first_name' => 'billing_first_name',
 			'last_name'  => 'billing_last_name',
@@ -40,6 +40,12 @@ final class VerificationRequest {
 				throw new InvalidArgumentException( 'A valid past date of birth is required for age verification.' );
 			}
 			$data['date_of_birth'] = $date_of_birth;
+		}
+		if ( $attestation_required ) {
+			if ( empty( $checkout['compadres_age_attestation'] ) ) {
+				throw new InvalidArgumentException( 'You must confirm you are 21 years of age or older to complete checkout.' );
+			}
+			$data['age_attestation'] = '1';
 		}
 		return new self( $data );
 	}

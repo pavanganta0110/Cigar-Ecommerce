@@ -27,4 +27,21 @@ final class VerificationRequestTest extends TestCase {
 		$this->expectException( InvalidArgumentException::class );
 		VerificationRequest::fromCheckout( array( 'compadres_date_of_birth' => '2025-02-30' ), true );
 	}
+
+	public function testRequiredAttestationMustBeChecked(): void {
+		$this->expectException( InvalidArgumentException::class );
+		VerificationRequest::fromCheckout( array(), false, true );
+	}
+
+	public function testCheckedAttestationIsAccepted(): void {
+		$request = VerificationRequest::fromCheckout( array( 'compadres_age_attestation' => '1' ), false, true );
+
+		self::assertSame( '1', $request->providerData()['age_attestation'] );
+	}
+
+	public function testAttestationIsOmittedWhenNotRequired(): void {
+		$request = VerificationRequest::fromCheckout( array( 'compadres_age_attestation' => '1' ), false, false );
+
+		self::assertArrayNotHasKey( 'age_attestation', $request->providerData() );
+	}
 }
