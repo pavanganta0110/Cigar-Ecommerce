@@ -298,6 +298,16 @@ The lock is not released explicitly on failure. Checkout validation failures rai
 
 This guard is additive to, and does not replace, the restriction/age/shipping/tax checkout hooks: each of those remains the authority for whether a given cart, address, and shipping selection is compliant. It only prevents the same compliant (or non-compliant) submission from producing more than one order.
 
+## Order snapshot
+
+Every order created through checkout receives one canonical, versioned snapshot (`_compadres_order_snapshot`, with `_compadres_order_snapshot_version`) written once, immediately after every compliance module has already written its own order meta. The snapshot is a historical record, not a compliance gate: unlike the restriction, age, shipping, and tax checkout hooks, a failure while building or saving it is audited (`order.snapshot_failed`) and swallowed rather than raised, so it can never block an order from being placed. It is also idempotent — a snapshot is written at most once per order.
+
+The snapshot exists specifically to freeze the values a later catalog change could otherwise silently rewrite in historical reporting: each line item's SKU, product name, and brand name/slug are captured from the product at order time, not read live from the current product on every future report. Order totals (subtotal, discount, shipping, tax, and grand total) and the customer type (guest or registered) are captured alongside them.
+
+The `compliance` section of the snapshot is populated generically: every `_compadres_`-prefixed order meta key any compliance module has already written (age verification, restrictions, shipping, tax, and any added later) is included with its prefix stripped, except the snapshot's own keys and any date-of-birth key, which is excluded as a defense-in-depth backstop — the sole authority for what personal data is safe to persist remains the module that collects it, such as age verification's explicit deletion of the transient date-of-birth value before order creation. This means a new compliance module's order meta is picked up automatically without this snapshot needing to change.
+
+This is scoped to orders created through checkout (`woocommerce_checkout_order_created`); orders created directly in wp-admin or through the REST API do not currently receive a snapshot.
+
 ## Manual sales tax and reporting
 
 The active checkout sales-tax rule set is the business-approved **Avg Combined Reference %** column from the PDF export titled `Compadres_Cigars_50_State_Tobacco_Tax_Matrix_2026.xlsx`. The source file hash is `802f4b18906fe7e6a25c179885ad7fb2b7a536951ab1a9d17b98bdfa249e36b3`. It contains 50 state rows and no District of Columbia rule. Application activation is effective from the explicit business approval date, 2026-08-19; the document title's `2026` label is retained as source-period metadata and is not treated as evidence of a January 1 effective date.
