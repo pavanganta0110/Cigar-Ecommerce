@@ -10,6 +10,7 @@ use Compadres\Commerce\AgeVerification\VerificationStatus;
 use Compadres\Commerce\AgeVerification\WordPressAgeVerificationRuntime;
 use Compadres\Commerce\Integrations\IntegrationStatus;
 use Compadres\Commerce\Shipping\OrderShippingMeta;
+use Compadres\Commerce\Shipping\OrderTracking;
 use Compadres\Commerce\Shipping\WordPressShippingRuntime;
 use WC_Order;
 
@@ -50,8 +51,9 @@ final class OperationsDashboard {
 		if ( ! current_user_can( self::CAPABILITY ) ) {
 			wp_die( esc_html__( 'You are not allowed to view operations status.', 'compadres-commerce' ) );
 		}
-		$statuses = $this->integrationStatuses();
-		$orders   = $this->attentionOrders();
+		$statuses  = $this->integrationStatuses();
+		$orders    = $this->attentionOrders();
+		$shipments = $this->recentShipments();
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Compadres Operations', 'compadres-commerce' ); ?></h1>
@@ -103,6 +105,40 @@ final class OperationsDashboard {
 					<?php endforeach; ?>
 				</tbody>
 			</table>
+
+			<h2><?php esc_html_e( 'Recent shipments', 'compadres-commerce' ); ?></h2>
+			<p><?php esc_html_e( 'Orders from the last 30 days with a recorded tracking number.', 'compadres-commerce' ); ?></p>
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Order', 'compadres-commerce' ); ?></th>
+						<th><?php esc_html_e( 'Date', 'compadres-commerce' ); ?></th>
+						<th><?php esc_html_e( 'Tracking number', 'compadres-commerce' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php if ( array() === $shipments ) : ?>
+						<tr><td colspan="3"><?php esc_html_e( 'No shipments recorded yet.', 'compadres-commerce' ); ?></td></tr>
+					<?php endif; ?>
+					<?php foreach ( $shipments as $order ) : ?>
+						<?php
+						$tracking     = (string) $order->get_meta( OrderTracking::META_KEY );
+						$tracking_url = OrderTracking::trackingUrl( $tracking );
+						?>
+						<tr>
+							<td><a href="<?php echo esc_url( $order->get_edit_order_url() ); ?>">#<?php echo esc_html( $order->get_order_number() ); ?></a></td>
+							<td><?php echo esc_html( (string) $order->get_date_created() ); ?></td>
+							<td>
+								<?php if ( null !== $tracking_url ) : ?>
+									<a href="<?php echo esc_url( $tracking_url ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $tracking ); ?></a>
+								<?php else : ?>
+									<?php echo esc_html( $tracking ); ?>
+								<?php endif; ?>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
 		</div>
 		<?php
 	}
@@ -141,5 +177,20 @@ final class OperationsDashboard {
 			)
 		);
 		return $orders;
+	}
+
+	/** @return list<WC_Order> */
+	private function recentShipments(): array {
+		return wc_get_orders(
+			array(
+				'limit'        => self::RESULT_SIZE,
+				'orderby'      => 'date',
+				'order'        => 'DESC',
+				'date_created' => '>' . strtotime( self::LOOKBACK ),
+				'return'       => 'objects',
+				'meta_key'     => OrderTracking::META_KEY, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Bounded to 50 results within a 30-day window on a dedicated operations page.
+				'meta_compare' => 'EXISTS',
+			)
+		);
 	}
 }
