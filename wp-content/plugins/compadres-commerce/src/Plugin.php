@@ -27,6 +27,7 @@ use Compadres\Commerce\Security\RoleManager;
 use Compadres\Commerce\Shipping\CheckoutShippingIntegration;
 use Compadres\Commerce\Shipping\FedExShippingMethod;
 use Compadres\Commerce\Shipping\MockShippingMethod;
+use Compadres\Commerce\Shipping\OrderTrackingAdmin;
 use Compadres\Commerce\Shipping\ShippingAdmin;
 use Compadres\Commerce\Tax\ManualSalesTaxInstaller;
 use Compadres\Commerce\Tax\ManualSalesTaxIntegration;
@@ -75,6 +76,7 @@ final class Plugin {
 		( new AgeVerificationAdmin() )->registerHooks();
 		( new OrderSnapshotWriter() )->registerHooks();
 		( new ShippingAdmin() )->register();
+		( new OrderTrackingAdmin() )->registerHooks();
 		( new CheckoutShippingIntegration() )->register();
 		add_filter( 'woocommerce_shipping_methods', array( $this, 'registerShippingMethods' ) );
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {

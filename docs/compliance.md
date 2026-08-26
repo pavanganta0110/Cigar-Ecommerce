@@ -234,6 +234,7 @@ Only these shipping events are emitted through the redacting audit service:
 - `shipping.eligibility_checked`
 - `shipping.checkout_blocked`
 - `shipping.settings_updated`
+- `shipping.tracking_number_updated`
 
 Audit context is bounded to normalized provider/service support, result, and enforcement phase. It excludes full addresses, cart contents, carrier payloads, raw exceptions, authorization values, credentials, and customer secrets.
 
@@ -249,6 +250,12 @@ node_modules/.bin/playwright test tests/e2e/shipping.spec.ts --project=mobile-ch
 ```
 
 `tests/e2e/shipping.spec.ts` creates and removes an isolated U.S. test zone, temporarily makes the fictional product shippable, uses Cash on Delivery only as a gateway-boundary probe, and restores checkout, product, age, payment, scenario, and restriction state. It covers eligible, unsupported, unavailable, no-service, forged-value, geographic-ordering, age-ordering, metadata/administration, production prohibition, payment blocking, desktop/mobile, audit privacy, and focused Axe behavior. It never contacts a real carrier.
+
+### Manually recorded tracking number
+
+No code in this repository creates a FedEx shipment, purchases a label, or calls FedEx's Ship or Track/Visibility APIs; the shipping integration is scoped to rate quoting and Adult Signature Required eligibility only, per the production prohibition above. A tracking number therefore only exists once a staff member creates the label in FedEx's own system, exactly as they would without this project.
+
+`OrderTrackingAdmin` gives staff one place to record that resulting tracking number — a field on the WooCommerce order edit screen, capability-gated to `edit_shop_orders` and nonce-protected per order — and surfaces it in three places once saved: a column on the admin orders list (registered for both HPOS and legacy order storage, since only one pair of hooks fires depending on that setting), the customer's own order-details view, and the order edit screen itself. All three link to FedEx's public tracking page; none of them poll FedEx or store a carrier response. `OrderTracking::isValid()` bounds the stored value to 6–34 uppercase alphanumeric characters before it is ever rendered into a link, so a malformed or forged value fails closed to no link rather than an unsafe URL.
 
 ## Administrative audit logging
 
