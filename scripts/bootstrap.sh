@@ -41,6 +41,11 @@ wp_cli rewrite structure '/%postname%/' --hard
 wp_cli plugin install woocommerce --version="${WOOCOMMERCE_VERSION}" --activate
 wp_cli theme activate compadres
 wp_cli plugin activate compadres-commerce
+# Remove WordPress-bundled defaults nobody uses so staff never see them in
+# Plugins/Themes/Updates: they add third-party names and update nags to a
+# store meant to read as Compadres, not as generic WordPress.
+wp_cli plugin delete akismet hello 2>/dev/null || true
+wp_cli theme delete twentytwentyfive twentytwentyfour twentytwentythree 2>/dev/null || true
 if [[ "${APP_ENV:-local}" == "local" || "${APP_ENV:-local}" == "development" ]]; then
   wp_cli compadres fixtures load
 fi
