@@ -297,3 +297,34 @@ The snapshot exists specifically to freeze the values a later catalog change cou
 The `compliance` section of the snapshot is populated generically: every `_compadres_`-prefixed order meta key any compliance module has already written (age verification, restrictions, shipping, tax, and any added later) is included with its prefix stripped, except the snapshot's own keys and any date-of-birth key, which is excluded as a defense-in-depth backstop — the sole authority for what personal data is safe to persist remains the module that collects it, such as age verification's explicit deletion of the transient date-of-birth value before order creation. This means a new compliance module's order meta is picked up automatically without this snapshot needing to change.
 
 This is scoped to orders created through checkout (`woocommerce_checkout_order_created`); orders created directly in wp-admin or through the REST API do not currently receive a snapshot.
+
+## Manual sales tax and reporting
+
+The active checkout sales-tax rule set is the business-approved **Avg Combined Reference %** column from the PDF export titled `Compadres_Cigars_50_State_Tobacco_Tax_Matrix_2026.xlsx`. The source file hash is `802f4b18906fe7e6a25c179885ad7fb2b7a536951ab1a9d17b98bdfa249e36b3`. It contains 50 state rows and no District of Columbia rule. Application activation is effective from the explicit business approval date, 2026-08-19; the document title's `2026` label is retained as source-period metadata and is not treated as evidence of a January 1 effective date.
+
+### Average-rate limitation
+
+The source itself states that average combined rates are reference values and exact destination-jurisdiction rates should normally be used at checkout. The business explicitly directed checkout to use the average combined values despite that warning. These rules therefore use the validated destination state but not city, county, special district, or ZIP-level rates. This can overcollect or undercollect compared with an exact local rate and requires tax-professional review before production launch. The staff dashboard displays this limitation and labels reported amounts as tax collected/estimated for reconciliation rather than final filed liability.
+
+The rule set does not infer or combine other tax layers:
+
+- Shipping is configured as non-taxable because the matrix does not provide shipping-taxability instructions.
+- Cigar/tobacco excise taxes are excluded. Percentage-of-wholesale-price, manufacturer-price, per-cigar, capped, and tiered excise rules cannot be applied as ordinary retail sales-tax percentages.
+- Economic-nexus thresholds in the matrix are retained as source context but are not automatically evaluated by checkout. Registration, nexus, and collection authorization require business/tax-professional confirmation.
+- District of Columbia and any unsupported destination fail closed rather than silently receiving a zero rate.
+
+### Server authority and historical records
+
+WooCommerce's native tax table contains the dedicated `compadres-cigars` class with one destination-state rate per state. Only products carrying the controlled `cigar` sales-tax classification use this class; unclassified and unrelated products preserve their existing WooCommerce tax treatment. Product tax status/class are selected server-side; browser-submitted rates and tax totals are not authoritative. A cart containing classified cigars fails when the U.S. destination has no approved rule or the native tax class/rates fail integrity checks. Zero-rate states are explicit rules, not missing configuration.
+
+Every created order stores a protected tax snapshot containing the destination state, percent rate, calculated tax amount, calculation basis, source column, source document, source SHA-256, rule version, approval effective date, shipping-taxability decision, and average-reference flag. Reports use immutable WooCommerce order/refund tax records rather than recalculating historical orders under the current rule set.
+
+### Sales & Tax Dashboard
+
+The private dashboard requires `compadres_view_tax_reports` and exposes no customer identity, full address, payment, or age-verification data. Processing/completed orders created in the selected period count as finalized sales. Refunds are attributed to the period in which each refund was created, including refunds against older orders, so later refunds do not rewrite an earlier period. Pending, on-hold, cancelled, and failed orders are not counted as finalized collections. CSV export requires the same capability plus a nonce, neutralizes spreadsheet-formula and control-character prefixes (including formulas after leading whitespace), and emits a bounded audit event.
+
+Current inventory is a live operational value, not a historical inventory snapshot. Tax collected and estimated remittance totals still require reconciliation for exemptions, registrations, filing periods, credits, prior remittances, and jurisdiction-specific adjustments.
+
+## Compadres staff branding
+
+Staff login and administration surfaces use Compadres Cigars branding. The WordPress logo, WordPress footer/version text, browser-title suffix, and core update branding notice are removed from the staff-facing portal. This is presentation hardening only: WordPress and WooCommerce remain the underlying application platform, and capability/nonces remain the actual authorization controls.
