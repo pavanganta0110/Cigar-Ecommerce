@@ -15,7 +15,9 @@ final class AdminBranding {
 		add_action( 'admin_init', array( $this, 'removeCoreUpdateNag' ) );
 		add_action( 'admin_init', array( $this, 'removeActionSchedulerNag' ) );
 		add_action( 'admin_menu', array( $this, 'renameWooCommerceMenu' ), 999 );
+		add_action( 'admin_menu', array( $this, 'removeUnusedContentMenus' ), 999 );
 		add_action( 'admin_bar_menu', array( $this, 'removeWordPressLogo' ), 999 );
+		add_action( 'admin_bar_menu', array( $this, 'removeAdminBarComments' ), 999 );
 		add_filter( 'woocommerce_admin_get_feature_config', array( $this, 'disableMarketingFeatures' ) );
 		add_action( 'user_register', array( WooCommerceAdminDefaults::class, 'dismissJetpackInstallPrompt' ) );
 		add_filter( 'rest_request_after_callbacks', array( $this, 'suppressMarketingRecommendations' ), 10, 3 );
@@ -31,6 +33,26 @@ final class AdminBranding {
 
 	public function removeWordPressLogo( WP_Admin_Bar $admin_bar ): void {
 		$admin_bar->remove_node( 'wp-logo' );
+	}
+
+	public function removeAdminBarComments( WP_Admin_Bar $admin_bar ): void {
+		$admin_bar->remove_node( 'comments' );
+	}
+
+	/**
+	 * Removes the Posts, Media, Comments, and Pages menu items. This store
+	 * runs as pure e-commerce; none of WordPress's blogging/content
+	 * scaffolding is used day to day. Page editing remains reachable via
+	 * the "Edit Page" link WordPress already shows in the front-end admin
+	 * bar when viewing any page while logged in, so this only removes a
+	 * navigation path from the sidebar, not the underlying post types,
+	 * capabilities, or content.
+	 */
+	public function removeUnusedContentMenus(): void {
+		remove_menu_page( 'edit.php' );
+		remove_menu_page( 'upload.php' );
+		remove_menu_page( 'edit-comments.php' );
+		remove_menu_page( 'edit.php?post_type=page' );
 	}
 
 	/**
