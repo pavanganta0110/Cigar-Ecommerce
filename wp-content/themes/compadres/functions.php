@@ -56,6 +56,58 @@ add_filter(
 	}
 );
 
+add_action( 'after_setup_theme', 'compadres_maybe_install_default_logo', 20 );
+
+/**
+ * Seeds the site's Customizer logo from the bundled brand asset the first
+ * time the theme runs, so every environment shows the real Compadres crest
+ * without a manual Site Identity step. Once a logo is set — by this or by a
+ * staff member through Site Identity — it is never overwritten again.
+ */
+function compadres_maybe_install_default_logo(): void {
+	if ( get_theme_mod( 'custom_logo' ) ) {
+		return;
+	}
+	if ( '1' === get_option( 'compadres_default_logo_installed' ) ) {
+		return;
+	}
+
+	$source = get_template_directory() . '/assets/images/logo.png';
+	if ( ! file_exists( $source ) ) {
+		return;
+	}
+
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+	require_once ABSPATH . 'wp-admin/includes/media.php';
+
+	$upload_dir = wp_upload_dir();
+	if ( ! empty( $upload_dir['error'] ) ) {
+		return;
+	}
+	$destination = $upload_dir['path'] . '/compadres-logo.png';
+	if ( ! file_exists( $destination ) && ! copy( $source, $destination ) ) {
+		return;
+	}
+
+	$attachment_id = wp_insert_attachment(
+		array(
+			'post_mime_type' => 'image/png',
+			'post_title'     => 'Compadres Cigars Logo',
+			'post_status'    => 'inherit',
+		),
+		$destination
+	);
+	if ( is_wp_error( $attachment_id ) || ! $attachment_id ) {
+		return;
+	}
+
+	$metadata = wp_generate_attachment_metadata( $attachment_id, $destination );
+	wp_update_attachment_metadata( $attachment_id, $metadata );
+	set_theme_mod( 'custom_logo', $attachment_id );
+	update_option( 'compadres_default_logo_installed', '1', false );
+}
+
 /**
  * Register native Customizer settings for approved storefront content.
  *
