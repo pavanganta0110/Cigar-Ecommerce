@@ -13,8 +13,12 @@ final class AdminBranding {
 
 	public function registerHooks(): void {
 		add_action( 'admin_init', array( $this, 'removeCoreUpdateNag' ) );
+		add_action( 'admin_init', array( $this, 'removeActionSchedulerNag' ) );
 		add_action( 'admin_menu', array( $this, 'renameWooCommerceMenu' ), 999 );
 		add_action( 'admin_bar_menu', array( $this, 'removeWordPressLogo' ), 999 );
+		add_filter( 'woocommerce_admin_get_feature_config', array( $this, 'disableMarketingFeatures' ) );
+		add_action( 'user_register', array( WooCommerceAdminDefaults::class, 'dismissJetpackInstallPrompt' ) );
+		add_filter( 'rest_request_after_callbacks', array( $this, 'suppressMarketingRecommendations' ), 10, 3 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueueStyles' ) );
 		add_action( 'login_enqueue_scripts', array( $this, 'enqueueStyles' ) );
 		add_filter( 'admin_footer_text', array( $this, 'footerText' ) );
@@ -61,6 +65,75 @@ final class AdminBranding {
 	public function removeCoreUpdateNag(): void {
 		remove_action( 'admin_notices', 'update_nag', 3 );
 		remove_action( 'network_admin_notices', 'update_nag', 3 );
+	}
+
+	/**
+	 * Removes WooCommerce's Action Scheduler "past-due actions" nag banner
+	 * for every staff role. Action Scheduler itself, and the underlying
+	 * scheduled tasks it runs, are untouched — this only hides an internal
+	 * library's own admin notice, which staff have no action to take on and
+	 * which otherwise reads as generic WordPress/WooCommerce plumbing rather
+	 * than anything about the store.
+	 */
+	public function removeActionSchedulerNag(): void {
+		if ( ! class_exists( '\ActionScheduler_AdminView' ) ) {
+			return;
+		}
+		remove_action( 'admin_notices', array( \ActionScheduler_AdminView::instance(), 'maybe_check_pastdue_actions' ) );
+	}
+
+	/**
+	 * Turns off WooCommerce Admin's own marketing and cross-sell surfaces —
+	 * the Inbox's promotional notes, remote extension suggestions, payment
+	 * gateway suggestions, mobile-app banners, WooCommerce Payments
+	 * promotion, shipping-label promotion, the pre-launch banner, and the
+	 * post-task effort survey — without touching any feature staff actually
+	 * use (Analytics, Marketing tools, Coupons). Onboarding/task-list
+	 * visibility is controlled separately by stored options, not this flag
+	 * list, and is unaffected.
+	 *
+	 * @param array<string, bool> $features
+	 * @return array<string, bool>
+	 */
+	public function disableMarketingFeatures( array $features ): array {
+		foreach (
+			array(
+				'remote-inbox-notifications',
+				'remote-free-extensions',
+				'payment-gateway-suggestions',
+				'mobile-app-banner',
+				'wc-pay-promotion',
+				'wc-pay-welcome-page',
+				'woo-mobile-welcome',
+				'shipping-label-banner',
+				'launch-your-store',
+				'customer-effort-score-tracks',
+			) as $feature
+		) {
+			$features[ $feature ] = false;
+		}
+		return $features;
+	}
+
+	/**
+	 * Empties WooCommerce's own "recommended marketing channels/extensions"
+	 * REST response — the Google/Reddit/TikTok "for WooCommerce" upsell
+	 * cards shown on the Marketing > Overview page. There is no dedicated
+	 * filter on this data, so this intercepts the specific REST route by
+	 * name; every other route, including Coupons and the rest of the
+	 * Marketing feature, is untouched.
+	 *
+	 * @param mixed             $response
+	 * @param mixed             $handler
+	 * @param \WP_REST_Request $request
+	 * @return mixed
+	 */
+	public function suppressMarketingRecommendations( $response, $handler, \WP_REST_Request $request ) {
+		unset( $handler );
+		if ( '/wc-admin/marketing/recommendations' === $request->get_route() ) {
+			return rest_ensure_response( array() );
+		}
+		return $response;
 	}
 
 	public function enqueueStyles(): void {
