@@ -38,6 +38,43 @@ final class GlobalPaymentsRuntime {
 		'globalpayments_paypal',
 	);
 
+	/**
+	 * Mirrors the plugin's own `form_fields` defaults (the values a store
+	 * admin would get the first time they save the settings screen). Without
+	 * this, an option array we only ever partially write ourselves is
+	 * missing keys the gateway class reads directly rather than through
+	 * WooCommerce's own settings accessor, which throws PHP warnings on
+	 * every admin page load.
+	 *
+	 * @var array<string, string|list<string>>
+	 */
+	private const SETTINGS_DEFAULTS = array(
+		'enabled'                       => 'no',
+		'title'                         => 'Credit Card',
+		'is_production'                 => 'no',
+		'transaction_region'            => 'global',
+		'account_name'                  => '',
+		'account_name_dropdown'         => '',
+		'sandbox_app_id'                => '',
+		'sandbox_app_key'               => '',
+		'sandbox_account_name'          => '',
+		'sandbox_account_name_dropdown' => '',
+		'allow_card_saving'             => 'no',
+		'payment_interface'             => 'drop_in',
+		'enable_dcc'                    => 'no',
+		'hpp_text'                      => 'Select Place Order to view available payment methods.',
+		'enable_gpay_hpp'               => 'no',
+		'enable_applepay_hpp'           => 'no',
+		'debug'                         => 'no',
+		'merchant_contact_url'          => '',
+		'enable_three_d_secure'         => 'no',
+		'payment_action'                => 'charge',
+		'txn_descriptor'                => '',
+		'check_avs_cvv'                 => 'yes',
+		'avs_reject_conditions'         => array( 'N', 'S', 'U', 'P', 'R', 'G', 'C', 'I' ),
+		'cvn_reject_conditions'         => array( 'P', '?', 'N' ),
+	);
+
 	public function __construct(
 		private GlobalPaymentsConfiguration $configuration
 	) {
@@ -58,16 +95,20 @@ final class GlobalPaymentsRuntime {
 	}
 
 	/**
-	 * Overwrites only the credential and mode fields this integration owns.
-	 * Every other field (enabled, title, transaction_region, payment_action,
-	 * three-D Secure, AVS/CVV rules, etc.) remains under the store admin's
-	 * control in the plugin's own settings screen.
+	 * Fills any field this option is still missing with the plugin's own
+	 * defaults, then overwrites only the credential and mode fields this
+	 * integration owns. Every other field (enabled, title, transaction_region,
+	 * payment_action, three-D Secure, AVS/CVV rules, etc.) is seeded once and
+	 * afterward remains entirely under the store admin's control in the
+	 * plugin's own settings screen — this never overwrites a value already
+	 * present there.
 	 */
 	public function syncSettings(): void {
 		$settings = get_option( self::SETTINGS_OPTION, array() );
 		if ( ! is_array( $settings ) ) {
 			$settings = array();
 		}
+		$settings = array_merge( self::SETTINGS_DEFAULTS, $settings );
 
 		$settings['sandbox_app_id']  = $this->configuration->sandboxAppId();
 		$settings['sandbox_app_key'] = $this->configuration->sandboxAppKey();

@@ -6,6 +6,7 @@ namespace Compadres\Commerce;
 
 use Compadres\Commerce\Admin\AdminBranding;
 use Compadres\Commerce\Admin\OperationsDashboard;
+use Compadres\Commerce\Admin\WooCommerceAdminDefaults;
 use Compadres\Commerce\AgeVerification\AgeVerificationAdmin;
 use Compadres\Commerce\AgeVerification\CheckoutIntegration;
 use Compadres\Commerce\Audit\AuditAdmin;
@@ -66,6 +67,7 @@ final class Plugin {
 		add_action( 'init', array( AuditMigration::class, 'maybeInstall' ), 1 );
 		add_action( 'init', array( RestrictionMigration::class, 'maybeInstall' ), 2 );
 		add_action( 'init', array( ManualSalesTaxInstaller::class, 'maybeInstall' ), 3 );
+		add_action( 'init', array( WooCommerceAdminDefaults::class, 'maybeInstall' ), 4 );
 		add_action( 'init', array( $this, 'ensureRoles' ), 5 );
 		( new AdminBranding() )->registerHooks();
 		( new AuditAdmin() )->registerHooks();
