@@ -29,7 +29,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .wordmark { align-items: center; display: inline-flex; font-family: var(--font-display); font-size: 1.55rem; font-weight: 700; gap: 0.75rem; text-decoration: none; }
 .wordmark small { color: var(--color-brass); display: block; font-family: var(--font-body); font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase; }
 .wordmark__crest { align-items: center; border: 1px solid var(--color-brass); border-radius: 50%; color: var(--color-brass); display: inline-flex; height: 2.8rem; justify-content: center; width: 2.8rem; }
-.wordmark--logo img { display: block; height: auto; max-height: 4rem; max-width: min(16rem, 45vw); width: auto; }
+.wordmark--logo img { display: block; height: auto; max-height: 4.75rem; max-width: min(16rem, 45vw); width: auto; }
 .primary-nav .menu { display: flex; gap: 1.75rem; justify-content: center; list-style: none; margin: 0; padding: 0; }
 .primary-nav a, .header-cart { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.09em; text-decoration: none; text-transform: uppercase; }
 .nav-toggle { display: none; }
