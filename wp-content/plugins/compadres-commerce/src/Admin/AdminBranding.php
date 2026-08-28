@@ -40,19 +40,22 @@ final class AdminBranding {
 	}
 
 	/**
-	 * Removes the Posts, Media, Comments, and Pages menu items. This store
-	 * runs as pure e-commerce; none of WordPress's blogging/content
-	 * scaffolding is used day to day. Page editing remains reachable via
-	 * the "Edit Page" link WordPress already shows in the front-end admin
-	 * bar when viewing any page while logged in, so this only removes a
-	 * navigation path from the sidebar, not the underlying post types,
-	 * capabilities, or content.
+	 * Removes the Posts, Media, Comments, and Pages menu items, and the
+	 * Dashboard's Updates submenu. This store runs as pure e-commerce;
+	 * none of WordPress's blogging/content scaffolding is used day to day,
+	 * and update availability is still visible inline on the Plugins
+	 * screen without a dedicated sidebar entry. Page editing remains
+	 * reachable via the "Edit Page" link WordPress already shows in the
+	 * front-end admin bar when viewing any page while logged in, so this
+	 * only removes navigation paths from the sidebar, not the underlying
+	 * post types, capabilities, content, or update mechanism.
 	 */
 	public function removeUnusedContentMenus(): void {
 		remove_menu_page( 'edit.php' );
 		remove_menu_page( 'upload.php' );
 		remove_menu_page( 'edit-comments.php' );
 		remove_menu_page( 'edit.php?post_type=page' );
+		remove_submenu_page( 'index.php', 'update-core.php' );
 	}
 
 	/**
