@@ -116,6 +116,16 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .woocommerce div.product p.price, .woocommerce div.product span.price { color: var(--color-copper); font-family: var(--font-display); font-size: 1.9rem; }
 .woocommerce div.product .product_meta { color: #6b5c4d; font-size: 0.85rem; margin-top: 1.5rem; }
 
+/*
+ * WooCommerce's default "info" notice (coupon prompt, our own Adult
+ * Signature checkout notice) ships a blue accent that clashes with the
+ * brand palette everywhere else on checkout. The extra `body` ancestor
+ * matches WooCommerce's own real (non-`:where()`) specificity regardless
+ * of stylesheet load order.
+ */
+body .woocommerce-info { border-top-color: var(--color-copper); }
+body .woocommerce-info::before { color: var(--color-copper); }
+
 .woocommerce-account .woocommerce-MyAccount-navigation, .woocommerce-account .woocommerce-MyAccount-content { vertical-align: top; }
 .woocommerce-account .woocommerce-MyAccount-navigation { display: inline-block; margin-right: 3rem; width: 16rem; }
 .woocommerce-account .woocommerce-MyAccount-content { display: inline-block; max-width: 40rem; }
