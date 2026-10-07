@@ -38,6 +38,39 @@ final class FedExApiClient {
 		return $this->normalizeRates( $this->decode( $response['body'], 'FedEx rating is unavailable.' ) );
 	}
 
+	/** Latest FedEx status for a tracking number. */
+	public function track( string $tracking_number ): FedExTrackingStatus {
+		if ( ! $this->configuration->isConfigured() || ! OrderTracking::isValid( $tracking_number ) ) {
+			throw new ShippingProviderException( 'FedEx tracking is unavailable.' );
+		}
+		try {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- JSON_THROW_ON_ERROR is required for fail-closed request construction.
+			$body = json_encode(
+				array(
+					'includeDetailedScans' => false,
+					'trackingInfo'         => array( array( 'trackingNumberInfo' => array( 'trackingNumber' => $tracking_number ) ) ),
+				),
+				JSON_THROW_ON_ERROR
+			);
+		} catch ( JsonException ) {
+			throw new ShippingProviderException( 'FedEx tracking is unavailable.' );
+		}
+		$response = $this->transport->post(
+			$this->configuration->apiBaseUrl() . '/track/v1/trackingnumbers',
+			array(
+				'Accept'        => 'application/json',
+				'Authorization' => 'Bearer ' . $this->accessToken(),
+				'Content-Type'  => 'application/json',
+				'X-locale'      => 'en_US',
+			),
+			$body
+		);
+		if ( 200 !== $response['status'] ) {
+			throw new ShippingProviderException( 'FedEx tracking is unavailable.' );
+		}
+		return FedExTrackingStatus::fromResponse( $this->decode( $response['body'], 'FedEx tracking is unavailable.' ) );
+	}
+
 	private function accessToken(): string {
 		if ( null !== $this->access_token ) {
 			return $this->access_token;

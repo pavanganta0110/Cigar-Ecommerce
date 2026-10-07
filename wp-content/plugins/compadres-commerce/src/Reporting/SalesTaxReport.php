@@ -4,10 +4,10 @@ declare( strict_types = 1 );
 
 namespace Compadres\Commerce\Reporting;
 
+use Compadres\Commerce\Fulfillment\OrderStatuses;
+
 /** Aggregates finalized WooCommerce order snapshots without customer data. */
 final class SalesTaxReport {
-
-	private const INCLUDED_STATUSES = array( 'processing', 'completed', 'refunded' );
 
 	/**
 	 * @param array<string, int|float>             $summary  Overall totals.
@@ -27,7 +27,7 @@ final class SalesTaxReport {
 		$states   = array();
 		$products = array();
 		foreach ( $orders as $order ) {
-			if ( ! in_array( $order->status(), self::INCLUDED_STATUSES, true ) ) {
+			if ( ! in_array( $order->status(), OrderStatuses::finalized(), true ) ) {
 				continue;
 			}
 			if ( $product_id > 0 ) {

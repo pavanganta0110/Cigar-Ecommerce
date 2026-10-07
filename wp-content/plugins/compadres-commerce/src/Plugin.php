@@ -18,6 +18,7 @@ use Compadres\Commerce\Catalog\FixtureCommand;
 use Compadres\Commerce\Catalog\ProductMetadata;
 use Compadres\Commerce\Checkout\CheckoutOrchestrator;
 use Compadres\Commerce\Compliance\AgeGate;
+use Compadres\Commerce\Fulfillment\PackedOrderStatus;
 use Compadres\Commerce\Infrastructure\Environment;
 use Compadres\Commerce\Notifications\EmailBranding;
 use Compadres\Commerce\Orders\OrderSnapshotWriter;
@@ -36,6 +37,7 @@ use Compadres\Commerce\Shipping\FedExShippingMethod;
 use Compadres\Commerce\Shipping\MockShippingMethod;
 use Compadres\Commerce\Shipping\OrderTrackingAdmin;
 use Compadres\Commerce\Shipping\ShippingAdmin;
+use Compadres\Commerce\Shipping\TrackingStatusSync;
 use Compadres\Commerce\Tax\ManualSalesTaxInstaller;
 use Compadres\Commerce\Tax\ManualSalesTaxIntegration;
 
@@ -93,6 +95,8 @@ final class Plugin {
 		add_filter( 'woocommerce_shipping_methods', array( $this, 'registerShippingMethods' ) );
 		GlobalPaymentsRuntime::create()->registerHooks();
 		( new PaymentAudit() )->registerHooks();
+		( new PackedOrderStatus() )->registerHooks();
+		( new TrackingStatusSync() )->registerHooks();
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			\WP_CLI::add_command( 'compadres fixtures', new FixtureCommand() );
 			\WP_CLI::add_command( 'compadres catalog', new CatalogCommand() );
