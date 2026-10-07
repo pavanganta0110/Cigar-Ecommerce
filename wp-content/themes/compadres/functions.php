@@ -56,6 +56,15 @@ add_filter(
 	}
 );
 
+// Result count and sort dropdown add noise while the catalog is only a few products.
+add_action(
+	'wp',
+	static function (): void {
+		remove_action( 'woocommerce_before_shop_loop', 'woocommerce_result_count', 20 );
+		remove_action( 'woocommerce_before_shop_loop', 'woocommerce_catalog_ordering', 30 );
+	}
+);
+
 add_action( 'after_setup_theme', 'compadres_maybe_install_default_logo', 20 );
 
 /**
