@@ -136,6 +136,15 @@ body .woocommerce-info::before { color: var(--color-copper); }
 .woocommerce-MyAccount-navigation li.is-active { background: var(--color-ink); }
 .woocommerce-MyAccount-navigation li.is-active a { color: var(--color-brass); }
 
+.catalog-filters { background: var(--color-white); border: 1px solid #e0d5c8; margin-bottom: 2rem; padding: 1.25rem 1.5rem; }
+.catalog-filters summary { cursor: pointer; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.catalog-filters form { align-items: end; display: grid; gap: 1rem 1.25rem; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); margin-top: 1.25rem; }
+.catalog-filters label { color: #6b5c4d; display: flex; flex-direction: column; font-size: 0.7rem; font-weight: 600; gap: 0.4rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.catalog-filters select, .catalog-filters input { background: var(--color-cream); border: 1px solid #d8c8b7; border-radius: 0; color: var(--color-ink); font: 500 0.9rem var(--font-body); height: 2.75rem; letter-spacing: normal; padding: 0 0.75rem; text-transform: none; width: 100%; }
+.catalog-filters button { background: var(--color-brass); border-color: var(--color-brass); color: var(--color-ink); height: 2.75rem; padding-block: 0; }
+.catalog-filters button:hover { background: var(--color-espresso); border-color: var(--color-espresso); color: var(--color-parchment); }
+.catalog-filters form > a { align-self: center; font-size: 0.8rem; font-weight: 600; }
+
 @media (width <= 800px) {
   .site-header__inner { grid-template-columns: 1fr auto auto; gap: 1rem; }
   .nav-toggle { background: transparent; color: var(--color-white); display: inline-block; padding: 0.7rem; }
