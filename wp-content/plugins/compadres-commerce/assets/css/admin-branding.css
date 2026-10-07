@@ -336,3 +336,15 @@ table.widefat tbody tr {
 .notice.notice-info {
 	border-left-color: var(--compadres-brass-strong);
 }
+
+/* Operations dashboard: fulfillment board */
+.compadres-board { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); margin: 1rem 0 1.5rem; }
+.compadres-board__card { background: #fff; border: 1px solid var(--compadres-ink-line, #3a2f27); padding: 1rem 1.25rem; }
+.compadres-board__card strong { display: block; font-family: Georgia, serif; font-size: 2.2rem; line-height: 1; }
+.compadres-board__card span { color: #6b5c4d; display: block; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; margin-top: 0.4rem; text-transform: uppercase; }
+.compadres-board__card em { color: #a6482f; display: block; font-size: 0.8rem; font-style: normal; font-weight: 700; margin-top: 0.3rem; }
+.compadres-board__card.is-alert { border-color: #a6482f; border-width: 2px; }
+.compadres-board__card.is-alert strong { color: #a6482f; }
+.compadres-board__late td { background: #f5e2da !important; }
+.compadres-board__received { margin: 0.25rem 0 0; }
+.order-status.status-packed { background: #e6dcc8; color: #5a4524; }

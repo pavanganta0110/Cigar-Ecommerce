@@ -16,7 +16,10 @@ namespace Compadres\Commerce\Shipping;
  */
 final class OrderTracking {
 
-	public const META_KEY = '_compadres_shipping_tracking_number';
+	public const META_KEY            = '_compadres_shipping_tracking_number';
+	public const META_STATUS_CODE    = '_compadres_carrier_status_code';
+	public const META_STATUS_TEXT    = '_compadres_carrier_status_text';
+	public const META_STATUS_CHECKED = '_compadres_carrier_status_checked';
 
 	private const TRACKING_URL_BASE = 'https://www.fedex.com/fedextrack/?trknbr=';
 

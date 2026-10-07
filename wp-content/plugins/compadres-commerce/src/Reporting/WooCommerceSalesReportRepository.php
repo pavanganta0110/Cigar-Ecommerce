@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 
 namespace Compadres\Commerce\Reporting;
 
+use Compadres\Commerce\Fulfillment\OrderStatuses;
 use WC_Order;
 
 /** Loads HPOS-compatible WooCommerce orders in bounded pages. */
@@ -23,7 +24,7 @@ final class WooCommerceSalesReportRepository {
 		do {
 			$result    = \wc_get_orders(
 				array(
-					'status'       => array( 'wc-processing', 'wc-completed', 'wc-refunded' ),
+					'status'       => OrderStatuses::finalizedPrefixed(),
 					'date_created' => $filters->from()->getTimestamp() . '...' . $filters->to()->getTimestamp(),
 					'limit'        => 100,
 					'page'         => $page,
@@ -78,7 +79,7 @@ final class WooCommerceSalesReportRepository {
 					continue;
 				}
 				$order = wc_get_order( $parent_id );
-				if ( ! $order instanceof WC_Order || ! in_array( 'wc-' . $order->get_status(), array( 'wc-processing', 'wc-completed', 'wc-refunded' ), true ) ) {
+				if ( ! $order instanceof WC_Order || ! in_array( 'wc-' . $order->get_status(), OrderStatuses::finalizedPrefixed(), true ) ) {
 					continue;
 				}
 				$seen[ $parent_id ] = true;

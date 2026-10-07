@@ -8,12 +8,17 @@ use Compadres\Commerce\AgeVerification\AgeVerificationSettings;
 use Compadres\Commerce\AgeVerification\ProviderConfiguration;
 use Compadres\Commerce\AgeVerification\VerificationStatus;
 use Compadres\Commerce\AgeVerification\WordPressAgeVerificationRuntime;
+use Compadres\Commerce\Fulfillment\FulfillmentBoard;
+use Compadres\Commerce\Fulfillment\FulfillmentRecord;
+use Compadres\Commerce\Fulfillment\FulfillmentRepository;
+use Compadres\Commerce\Fulfillment\FulfillmentStage;
 use Compadres\Commerce\Infrastructure\Environment;
 use Compadres\Commerce\Integrations\IntegrationStatus;
 use Compadres\Commerce\Payments\GlobalPaymentsConfiguration;
 use Compadres\Commerce\Shipping\OrderShippingMeta;
 use Compadres\Commerce\Shipping\OrderTracking;
 use Compadres\Commerce\Shipping\WordPressShippingRuntime;
+use DateTimeImmutable;
 use WC_Order;
 use WC_Order_Refund;
 
@@ -58,9 +63,84 @@ final class OperationsDashboard {
 		$orders    = $this->attentionOrders();
 		$shipments = $this->recentShipments();
 		$refunds   = $this->recentRefunds();
+		$now       = new DateTimeImmutable( 'now', wp_timezone() );
+		$board     = FulfillmentBoard::fromRecords( ( new FulfillmentRepository() )->recent(), $now );
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Compadres Operations', 'compadres-commerce' ); ?></h1>
+
+			<h2><?php esc_html_e( 'Orders and fulfillment', 'compadres-commerce' ); ?></h2>
+			<p class="compadres-board__received">
+				<?php
+				$received = $board->received();
+				echo esc_html(
+					sprintf(
+						/* translators: 1: orders today, 2: orders in last 7 days, 3: orders in last 30 days. */
+						__( 'Paid orders received: %1$d today, %2$d in the last 7 days, %3$d in the last 30 days.', 'compadres-commerce' ),
+						$received['today'],
+						$received['week'],
+						$received['month']
+					)
+				);
+				?>
+			</p>
+			<div class="compadres-board">
+				<div class="compadres-board__card<?php echo $board->staleToPack() > 0 ? ' is-alert' : ''; ?>">
+					<strong><?php echo esc_html( (string) $board->count( FulfillmentStage::TO_PACK ) ); ?></strong>
+					<span><?php esc_html_e( 'Not packed yet', 'compadres-commerce' ); ?></span>
+					<?php if ( $board->staleToPack() > 0 ) : ?>
+						<em><?php echo esc_html( sprintf( /* translators: %d: orders. */ _n( '%d waiting over 24 hours', '%d waiting over 24 hours', $board->staleToPack(), 'compadres-commerce' ), $board->staleToPack() ) ); ?></em>
+					<?php endif; ?>
+				</div>
+				<div class="compadres-board__card">
+					<strong><?php echo esc_html( (string) $board->count( FulfillmentStage::PACKED ) ); ?></strong>
+					<span><?php esc_html_e( 'Packed, needs a label', 'compadres-commerce' ); ?></span>
+				</div>
+				<div class="compadres-board__card">
+					<strong><?php echo esc_html( (string) $board->count( FulfillmentStage::SHIPPED ) ); ?></strong>
+					<span><?php esc_html_e( 'Shipped, in transit', 'compadres-commerce' ); ?></span>
+				</div>
+				<div class="compadres-board__card">
+					<strong><?php echo esc_html( (string) $board->count( FulfillmentStage::DELIVERED ) ); ?></strong>
+					<span><?php esc_html_e( 'Delivered (30 days)', 'compadres-commerce' ); ?></span>
+				</div>
+			</div>
+
+			<h3><?php esc_html_e( 'Orders to pack and ship', 'compadres-commerce' ); ?></h3>
+			<p><?php esc_html_e( 'Paid orders that are not shipped yet, oldest first. Mark orders as Packed from the Orders list (bulk action) or the order screen.', 'compadres-commerce' ); ?></p>
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Order', 'compadres-commerce' ); ?></th>
+						<th><?php esc_html_e( 'Placed', 'compadres-commerce' ); ?></th>
+						<th><?php esc_html_e( 'Customer', 'compadres-commerce' ); ?></th>
+						<th><?php esc_html_e( 'Items', 'compadres-commerce' ); ?></th>
+						<th><?php esc_html_e( 'Total', 'compadres-commerce' ); ?></th>
+						<th><?php esc_html_e( 'Status', 'compadres-commerce' ); ?></th>
+						<th><?php esc_html_e( 'Waiting', 'compadres-commerce' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php if ( array() === $board->toShip() ) : ?>
+						<tr><td colspan="7"><?php esc_html_e( 'Nothing waiting to be packed or shipped.', 'compadres-commerce' ); ?></td></tr>
+					<?php endif; ?>
+					<?php foreach ( array_slice( $board->toShip(), 0, 25 ) as $record ) : ?>
+						<?php
+						$hours = (int) floor( ( $now->getTimestamp() - $record->created()->getTimestamp() ) / 3600 );
+						$late  = FulfillmentStage::TO_PACK === $record->stage() && $hours > FulfillmentBoard::STALE_HOURS;
+						?>
+						<tr<?php echo $late ? ' class="compadres-board__late"' : ''; ?>>
+							<td><a href="<?php echo esc_url( $this->editUrl( $record ) ); ?>">#<?php echo esc_html( $record->orderNumber() ); ?></a></td>
+							<td><?php echo esc_html( $record->created()->format( 'M j, g:i a' ) ); ?></td>
+							<td><?php echo esc_html( $record->customerName() ); ?></td>
+							<td><?php echo esc_html( (string) $record->itemCount() ); ?></td>
+							<td><?php echo wp_kses_post( wc_price( $record->total() ) ); ?></td>
+							<td><?php echo esc_html( FulfillmentStage::TO_PACK === $record->stage() ? __( 'Not packed', 'compadres-commerce' ) : __( 'Packed', 'compadres-commerce' ) ); ?></td>
+							<td><?php echo esc_html( $hours >= 48 ? sprintf( /* translators: %d: days. */ _n( '%d day', '%d days', (int) floor( $hours / 24 ), 'compadres-commerce' ), (int) floor( $hours / 24 ) ) : sprintf( /* translators: %d: hours. */ _n( '%d hour', '%d hours', $hours, 'compadres-commerce' ), $hours ) ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
 
 			<h2><?php esc_html_e( 'Integration status', 'compadres-commerce' ); ?></h2>
 			<table class="widefat striped">
@@ -122,7 +202,7 @@ final class OperationsDashboard {
 				</thead>
 				<tbody>
 					<?php if ( array() === $shipments ) : ?>
-						<tr><td colspan="3"><?php esc_html_e( 'No shipments recorded yet.', 'compadres-commerce' ); ?></td></tr>
+						<tr><td colspan="4"><?php esc_html_e( 'No shipments recorded yet.', 'compadres-commerce' ); ?></td></tr>
 					<?php endif; ?>
 					<?php foreach ( $shipments as $order ) : ?>
 						<?php
@@ -139,6 +219,7 @@ final class OperationsDashboard {
 									<?php echo esc_html( $tracking ); ?>
 								<?php endif; ?>
 							</td>
+							<td><?php echo esc_html( '' !== (string) $order->get_meta( OrderTracking::META_STATUS_TEXT ) ? (string) $order->get_meta( OrderTracking::META_STATUS_TEXT ) : __( 'Not checked yet', 'compadres-commerce' ) ); ?></td>
 						</tr>
 					<?php endforeach; ?>
 				</tbody>
@@ -178,6 +259,11 @@ final class OperationsDashboard {
 			</table>
 		</div>
 		<?php
+	}
+
+	private function editUrl( FulfillmentRecord $record ): string {
+		$order = wc_get_order( $record->orderId() );
+		return $order instanceof WC_Order ? $order->get_edit_order_url() : '';
 	}
 
 	/** @return list<IntegrationStatus> */

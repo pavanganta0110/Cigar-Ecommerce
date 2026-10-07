@@ -40,6 +40,10 @@ final class OrderTrackingAdmin {
 		<p class="form-field form-field-wide">
 			<label for="compadres_tracking_number"><?php esc_html_e( 'FedEx tracking number', 'compadres-commerce' ); ?></label>
 			<input type="text" id="compadres_tracking_number" name="compadres_tracking_number" maxlength="34" value="<?php echo esc_attr( $tracking ); ?>" placeholder="<?php esc_attr_e( 'e.g. 794658135984', 'compadres-commerce' ); ?>">
+			<?php $status_text = (string) $order->get_meta( OrderTracking::META_STATUS_TEXT ); ?>
+			<?php if ( '' !== $status_text ) : ?>
+				<span class="description"><?php echo esc_html( sprintf( /* translators: %s: FedEx status. */ __( 'FedEx status: %s', 'compadres-commerce' ), $status_text ) ); ?></span>
+			<?php endif; ?>
 		</p>
 		<?php
 	}
@@ -76,6 +80,9 @@ final class OrderTrackingAdmin {
 			array( 'tracking_number' => $sanitized ),
 			get_current_user_id()
 		);
+		if ( '' !== $sanitized ) {
+			do_action( 'compadres_tracking_number_updated', $order_id );
+		}
 	}
 
 	public function renderCustomerTracking( WC_Order $order ): void {
@@ -86,7 +93,12 @@ final class OrderTrackingAdmin {
 		}
 		?>
 		<h2><?php esc_html_e( 'Tracking', 'compadres-commerce' ); ?></h2>
-		<p><a href="<?php echo esc_url( $url ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $tracking ); ?></a></p>
+		<p><a href="<?php echo esc_url( $url ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $tracking ); ?></a>
+			<?php $status_text = (string) $order->get_meta( OrderTracking::META_STATUS_TEXT ); ?>
+			<?php if ( '' !== $status_text ) : ?>
+				<br><?php echo esc_html( $status_text ); ?>
+			<?php endif; ?>
+		</p>
 		<?php
 	}
 
