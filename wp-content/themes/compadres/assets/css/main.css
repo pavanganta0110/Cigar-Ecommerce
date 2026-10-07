@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Anton&family=Permanent+Marker&display=swap");
 
 :root {
   --color-ink: #17120f;
@@ -75,7 +75,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .brand-hero { align-items: center; background: var(--color-coal); color: var(--color-white); display: grid; gap: 3rem; grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.7fr); padding: clamp(4rem, 8vw, 8rem) var(--space-page); }
 .brand-hero h1 { font-family: var(--font-display); font-size: clamp(3rem, 7vw, 6rem); line-height: 0.95; margin: 0; }
 .brand-hero__short { color: #e1d4c4; font-size: 1.1rem; max-width: 42rem; }
+.brand-hero__media { position: relative; }
 .brand-hero__image { height: min(32rem, 60vh); object-fit: cover; width: 100%; }
+.brand-hero__logo { height: auto; max-width: 11rem; position: absolute; right: 0; top: 0; }
+.brand-hero__cta { display: inline-block; }
+.brand-story { max-width: 52rem; }
+.brand-assurances { border-top: 1px solid #d8c8b7; display: flex; flex-wrap: wrap; font-size: 0.75rem; font-weight: 700; gap: 1rem 3rem; justify-content: center; letter-spacing: 0.14em; list-style: none; margin: 0; padding: 1.75rem var(--space-page); text-transform: uppercase; }
 .brand-products > h2 { font-family: var(--font-display); font-size: clamp(2.5rem, 5vw, 4.5rem); }
 .section h2 { font-size: clamp(2.5rem, 5vw, 5rem); max-width: 50rem; }
 .site-footer { background: var(--color-ink); color: #dccab8; padding: 4rem var(--space-page) 2rem; }
@@ -154,3 +159,30 @@ body .woocommerce-info::before { color: var(--color-copper); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }
+
+/* Sugarhill: loud, colorful, hip-hop */
+.brand-archive--sugarhill { background: #0d0b14; border-top: 0.4rem solid; border-image: linear-gradient(90deg, #d6262b, #f28c28, #f5c542, #6a3fb5, #3a8fd1) 1; color: var(--color-white); }
+.brand-archive--sugarhill .brand-hero { background: radial-gradient(circle at 78% 30%, rgb(106 63 181 / 55%), transparent 45%), radial-gradient(circle at 20% 90%, rgb(214 38 43 / 30%), transparent 40%), #0d0b14; }
+.brand-archive--sugarhill .brand-hero h1 { background: linear-gradient(95deg, #d6262b, #f28c28 25%, #f5c542 50%, #6a3fb5 75%, #3a8fd1); background-clip: text; color: transparent; font-family: "Permanent Marker", cursive; font-size: clamp(3.5rem, 9vw, 7.5rem); letter-spacing: 0; line-height: 1.05; padding-bottom: 0.1em; }
+.brand-archive--sugarhill .brand-hero__short { font-family: Anton, sans-serif; font-size: clamp(1.4rem, 3vw, 2.2rem); letter-spacing: 0.04em; line-height: 1.15; text-transform: uppercase; }
+.brand-archive--sugarhill .eyebrow { color: #f5c542; }
+.brand-archive--sugarhill .brand-hero__cta { background: linear-gradient(#f9d76a, #d9a21f); border-color: #d9a21f; color: #17120f; }
+.brand-archive--sugarhill .brand-hero__image { border: 3px solid #f5c542; box-shadow: 0.9rem 0.9rem 0 #6a3fb5; }
+.brand-archive--sugarhill .brand-story { background: #efe3cc; clip-path: polygon(0 1.2%, 6% 0, 14% 1.4%, 23% 0.2%, 34% 1.3%, 46% 0, 58% 1.2%, 70% 0.1%, 82% 1.4%, 92% 0.2%, 100% 1.1%, 100% 98.6%, 91% 100%, 80% 98.7%, 68% 99.9%, 55% 98.6%, 43% 100%, 31% 98.8%, 19% 99.9%, 8% 98.7%, 0 100%); color: #17120f; max-width: none; }
+.brand-archive--sugarhill .brand-story .eyebrow { color: #d6262b; font-family: "Permanent Marker", cursive; font-size: 1.6rem; letter-spacing: 0; text-transform: none; }
+.brand-archive--sugarhill .brand-story h2 { font-family: Anton, sans-serif; font-size: clamp(2.5rem, 6vw, 4.5rem); text-transform: uppercase; }
+.brand-archive--sugarhill .brand-products > h2 { color: #f5c542; font-family: Anton, sans-serif; letter-spacing: 0.03em; text-transform: uppercase; }
+.brand-archive--sugarhill .brand-assurances { border-color: #3a2f55; color: #cbbff0; }
+
+/* Ronald Isley: black and gold, understated */
+.brand-archive--ronald-isley { background: #0a0a0a; border-top: 0.35rem solid #d6ad68; color: var(--color-white); }
+.brand-archive--ronald-isley .brand-hero { background: radial-gradient(circle at 75% 35%, rgb(214 173 104 / 22%), transparent 50%), #0a0a0a; }
+.brand-archive--ronald-isley .brand-hero h1 { background: linear-gradient(#f3d58a, #b98c3a); background-clip: text; color: transparent; font-size: clamp(3rem, 8vw, 6.5rem); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.brand-archive--ronald-isley .brand-hero__short { border-top: 1px solid #d6ad68; letter-spacing: 0.22em; margin-top: 1.25rem; padding-top: 1.25rem; text-transform: uppercase; }
+.brand-archive--ronald-isley .brand-hero__cta { background: linear-gradient(#f3d58a, #c9a050); border-color: #c9a050; color: #0a0a0a; }
+.brand-archive--ronald-isley .brand-hero__image { border: 1px solid #d6ad68; }
+.brand-archive--ronald-isley .brand-hero__logo { background: #000; border-radius: 50%; max-width: 9rem; right: 1rem; transform: translateY(-40%); }
+.brand-archive--ronald-isley .brand-story { background: var(--color-parchment); color: #17120f; max-width: none; }
+.brand-archive--ronald-isley .brand-story h2 { font-size: clamp(2.5rem, 6vw, 4.5rem); text-transform: uppercase; }
+.brand-archive--ronald-isley .brand-products > h2 { color: #d6ad68; letter-spacing: 0.04em; text-transform: uppercase; }
+.brand-archive--ronald-isley .brand-assurances { border-color: #2c2418; color: #d6ad68; }
