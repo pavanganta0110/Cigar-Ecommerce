@@ -20,6 +20,10 @@ final class CatalogFilters {
 		if ( ! is_shop() && ! is_product_taxonomy() ) {
 			return;
 		}
+		// Hidden while the catalog is small; return true from this filter to show the bar again.
+		if ( ! apply_filters( 'compadres_show_catalog_filters', false ) ) {
+			return;
+		}
 		echo '<details class="catalog-filters" open><summary>' . esc_html__( 'Filter cigars', 'compadres-commerce' ) . '</summary><form method="get">';
 		$this->select( 'brand', __( 'Brand', 'compadres-commerce' ), $this->brandOptions() );
 		foreach ( self::TEXT_FILTERS as $filter ) {

@@ -11,15 +11,12 @@ test('fictional development brands and products render from structured data', as
   await expect(page.getByRole('heading', { name: 'Cigars from this brand' })).toBeVisible();
 });
 
-test('catalog filters use labeled query-string controls', async ({ page }) => {
+test('the shop does not show the filter bar, result count, or sort dropdown', async ({ page }) => {
   await page.goto('/shop/');
-  const filters = page.getByText('Filter cigars', { exact: true });
-  await expect(filters).toBeVisible();
-  await page.getByLabel('Strength').selectOption('medium');
-  await page.getByRole('button', { name: 'Apply filters' }).click();
-  await expect(page).toHaveURL(/strength=medium/);
-  await expect(page.getByRole('link', { name: /Fictional/i }).first()).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Clear all' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Shop' })).toBeVisible();
+  await expect(page.getByText('Filter cigars', { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('Shop order')).toHaveCount(0);
+  await expect(page.locator('.woocommerce-result-count')).toHaveCount(0);
 });
 
 test('structured cigar metadata displays without internal classifications', async ({ page }) => {
